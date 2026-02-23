@@ -19,16 +19,16 @@ def tokenize_dataset(dataset, tokenizer):
 
     def tokenize_function(example):
         return tokenizer(
-            example["text"],
-            add_special_tokens=True,
-            truncation=False,
+            example["text"],  ## input raw strings "This is a sentence."
+            add_special_tokens=True, ## add BERT special tokens [CLS], [SEP]. [CLS] This is a sentence . [SEP]
+            truncation=False, ## keep full tokenized length
         )
 
     print("[INFO] Tokenizing dataset...")
     tokenized_dataset = dataset.map(
         tokenize_function,
-        batched=True,
-        remove_columns=["text"],
+        batched=True, ## processes multiple examples per batch for speed
+        remove_columns=["text"], ## removes original text columns and keep input_ids and attention_mask only
     )
 
     return tokenized_dataset
@@ -48,7 +48,7 @@ def create_fixed_length_sequences(tokenized_dataset, seq_len=256):
     total_length = len(all_tokens)
     total_length = (total_length // seq_len) * seq_len
 
-    all_tokens = all_tokens[:total_length]
+    all_tokens = all_tokens[:total_length] ## removes leftover tokens that don't fit into a full sequence
 
     # Create chunks
     sequences = [
