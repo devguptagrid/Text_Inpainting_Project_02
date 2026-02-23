@@ -7,7 +7,7 @@ Original dataset sizes:
 - Validation: 3,760
 - Test: 4,358
 
-After cleaning (removing empty lines and very short sequences):
+After cleaning (removing empty lines and very short sequences<10 character>):
 - Train: 23,547
 - Validation: 2,454
 - Test: 2,850
