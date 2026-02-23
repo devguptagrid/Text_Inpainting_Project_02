@@ -4,6 +4,7 @@ from data.load_data import load_wikitext, clean_dataset
 from data.preprocessing import get_tokenizer, tokenize_dataset, create_fixed_length_sequences
 from data.dataset import TextInpaintingDataset
 from models.transformer import TransformerDenoiser
+from training.loss import masked_cross_entropy_loss
 
 from torch.utils.data import DataLoader
 import torch
@@ -48,3 +49,16 @@ if __name__ == "__main__":
 
     print("Input shape:", input_ids.shape)
     print("Logits shape:", logits.shape)
+
+# after logits = model(input_ids)
+
+target_ids = batch["target_ids"].to(device)
+mask_positions = batch["mask_positions"].to(device)
+
+loss = masked_cross_entropy_loss(
+    logits,
+    target_ids,
+    mask_positions,
+)
+
+print("Loss:", loss.item())
