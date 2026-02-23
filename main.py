@@ -4,6 +4,8 @@ from data.load_data import load_wikitext, clean_dataset
 from data.preprocessing import get_tokenizer, tokenize_dataset, create_fixed_length_sequences
 from data.dataset import TextInpaintingDataset
 
+from torch.utils.data import DataLoader
+
 
 if __name__ == "__main__":
     set_seed(42)
@@ -23,7 +25,7 @@ if __name__ == "__main__":
         seq_len=256
     )
 
-    # Create dataset with span masking
+    # Create PyTorch dataset
     train_data = TextInpaintingDataset(
         sequences=train_sequences,
         tokenizer=tokenizer,
@@ -31,10 +33,18 @@ if __name__ == "__main__":
         mask_ratio=0.25,
     )
 
-    print("Dataset size:", len(train_data))
+    # Create DataLoader
+    train_loader = DataLoader(
+        train_data,
+        batch_size=32,
+        shuffle=True,
+    )
 
-    sample = train_data[0]
+    print("Number of batches per epoch:", len(train_loader))
 
-    print("Input shape:", sample["input_ids"].shape)
-    print("Target shape:", sample["target_ids"].shape)
-    print("Mask positions sum:", sample["mask_positions"].sum().item())
+    # Get one batch
+    batch = next(iter(train_loader))
+
+    print("Batch input shape:", batch["input_ids"].shape)
+    print("Batch target shape:", batch["target_ids"].shape)
+    print("Batch mask shape:", batch["mask_positions"].shape)
