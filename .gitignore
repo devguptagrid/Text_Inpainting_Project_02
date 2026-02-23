@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environment
+venv/
+.env/
+
+# Mac
+.DS_Store
+
+# Logs
+outputs/logs/
+
+# Checkpoints
+outputs/checkpoints/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# Large files
+*.pt
+*.pth
