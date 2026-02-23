@@ -4,7 +4,7 @@ from data.load_data import load_wikitext, clean_dataset
 from data.preprocessing import get_tokenizer, tokenize_dataset, create_fixed_length_sequences
 from data.dataset import TextInpaintingDataset
 from models.transformer import TransformerDenoiser
-from training.loss import masked_cross_entropy_loss
+from training.trainer import train_one_epoch
 
 from torch.utils.data import DataLoader
 import torch
@@ -14,6 +14,7 @@ if __name__ == "__main__":
     set_seed(42)
     device = get_device()
 
+    # Load dataset
     dataset = load_wikitext()
     train_dataset = clean_dataset(dataset["train"])
 
@@ -38,27 +39,21 @@ if __name__ == "__main__":
         shuffle=True,
     )
 
-    # Initialize model
     model = TransformerDenoiser().to(device)
 
-    batch = next(iter(train_loader))
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=3e-4,
+        weight_decay=0.01,
+    )
 
-    input_ids = batch["input_ids"].to(device)
+    print("Starting training...")
 
-    logits = model(input_ids)
+    avg_loss = train_one_epoch(
+        model,
+        train_loader,
+        optimizer,
+        device,
+    )
 
-    print("Input shape:", input_ids.shape)
-    print("Logits shape:", logits.shape)
-
-# after logits = model(input_ids)
-
-target_ids = batch["target_ids"].to(device)
-mask_positions = batch["mask_positions"].to(device)
-
-loss = masked_cross_entropy_loss(
-    logits,
-    target_ids,
-    mask_positions,
-)
-
-print("Loss:", loss.item())
+    print("Average Loss after 1 epoch:", avg_loss)
