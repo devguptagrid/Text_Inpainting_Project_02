@@ -9,11 +9,17 @@ from training.trainer import train_one_epoch, evaluate
 from torch.utils.data import DataLoader
 import torch
 
+from models.diffusion_model import DiffusionBert
+from diffusion.forward_process import DiscreteDiffusionForward
+from training.diffusion_trainer import train_diffusion_epoch, evaluate_diffusion
+from data.diffusion_dataset import DiffusionDataset
+
+mode = "diffusion"   # "baseline" or "diffusion"
 
 if __name__ == "__main__":
     set_seed(42)
     device = get_device()
-
+    
     dataset = load_wikitext()
 
     train_dataset = clean_dataset(dataset["train"])
@@ -34,69 +40,131 @@ if __name__ == "__main__":
         tokenized_val,
         seq_len=256
     )
-
-    train_data = TextInpaintingDataset(
-    sequences=train_sequences,
-    tokenizer=tokenizer,
-    mask_type="span",
-    mask_ratio=0.40,
-    dynamic_masking=True,   # training = dynamic
-)
-
-    val_data = TextInpaintingDataset(
-        sequences=val_sequences,
-        tokenizer=tokenizer,
-        mask_type="span",
-        mask_ratio=0.40,
-        dynamic_masking=False,  # validation = fixed
-    )
-
-
-    train_loader = DataLoader(
-        train_data,
-        batch_size=32,
-        shuffle=True,
-    )
-
-    val_loader = DataLoader(
-        val_data,
-        batch_size=32,
-        shuffle=False,
-    )
-
-    model = BertDenoiser().to(device)
-
-    optimizer = torch.optim.AdamW(
-        model.parameters(),
-        lr=3e-4,
-        weight_decay=0.01,
-    )
-
     num_epochs = 3
 
-    print("\nStarting Training...\n")
-
-    for epoch in range(num_epochs):
-
-        print(f"\nEpoch {epoch+1}/{num_epochs}")
-
-        train_loss, train_acc = train_one_epoch(
-            model,
-            train_loader,
-            optimizer,
-            device,
+    if mode == "baseline":
+        train_data = TextInpaintingDataset(
+        sequences=train_sequences,
+        tokenizer=tokenizer,
+        mask_type="span",
+        mask_ratio=0.25,
+        dynamic_masking=True,   # training = dynamic
         )
 
-        val_loss, val_acc = evaluate(
-            model,
-            val_loader,
-            device,
+        val_data = TextInpaintingDataset(
+            sequences=val_sequences,
+            tokenizer=tokenizer,
+            mask_type="span",
+            mask_ratio=0.25,
+            dynamic_masking=False,  # validation = fixed
         )
 
-        print(f"\nTrain Loss: {train_loss:.4f}")
-        print(f"Train Accuracy: {train_acc:.4f}")
 
-        print(f"Validation Loss: {val_loss:.4f}")
-        print(f"Validation Accuracy: {val_acc:.4f}")
+        train_loader = DataLoader(
+            train_data,
+            batch_size=32,
+            shuffle=True,
+        )
+
+        val_loader = DataLoader(
+            val_data,
+            batch_size=32,
+            shuffle=False,
+        )
+
+        
 
     
+
+        print("\nRunning BASELINE training...\n")
+
+        model = BertDenoiser().to(device)
+
+        optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=3e-4,
+            weight_decay=0.01,
+        )
+
+        for epoch in range(num_epochs):
+
+            print(f"\nEpoch {epoch+1}/{num_epochs}")
+
+            train_loss, train_acc = train_one_epoch(
+                model,
+                train_loader,
+                optimizer,
+                device,
+            )
+
+            val_loss, val_acc = evaluate(
+                model,
+                val_loader,
+                device,
+            )
+
+            print(f"\nTrain Loss: {train_loss:.4f}")
+            print(f"Train Accuracy: {train_acc:.4f}")
+
+            print(f"Validation Loss: {val_loss:.4f}")
+            print(f"Validation Accuracy: {val_acc:.4f}")
+
+
+    elif mode == "diffusion":
+
+        print("\nRunning DIFFUSION training...\n")
+        
+        T = 8
+        train_data = DiffusionDataset(train_sequences)
+        val_data = DiffusionDataset(val_sequences)
+
+        train_loader = DataLoader(
+            train_data,
+            batch_size=32,
+            shuffle=True,
+        )
+
+        val_loader = DataLoader(
+            val_data,
+            batch_size=32,
+            shuffle=False,
+        )
+
+        model = DiffusionBert(T=T).to(device)
+
+        diffusion_forward = DiscreteDiffusionForward(
+            T=T,
+            mask_token_id=tokenizer.mask_token_id
+        )
+
+        optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=3e-5,
+        )
+
+        for epoch in range(num_epochs):
+
+            print(f"\nEpoch {epoch+1}/{num_epochs}")
+
+            train_loss, train_acc = train_diffusion_epoch(
+                model,
+                train_loader,
+                optimizer,
+                diffusion_forward,
+                tokenizer,
+                device,
+            )
+
+            val_loss, val_acc = evaluate_diffusion(
+                model,
+                val_loader,
+                diffusion_forward,
+                tokenizer,
+                device,
+            )
+
+            print(f"\nTrain Loss: {train_loss:.4f}")
+            print(f"Train Accuracy: {train_acc:.4f}")
+
+            print(f"Validation Loss: {val_loss:.4f}")
+            print(f"Validation Accuracy: {val_acc:.4f}")
