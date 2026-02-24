@@ -70,24 +70,31 @@ if __name__ == "__main__":
         weight_decay=0.01,
     )
 
-    print("Training for 1 epoch...")
-    train_loss, train_acc = train_one_epoch(
-        model,
-        train_loader,
-        optimizer,
-        device,
-    )
+    num_epochs = 5
 
-    val_loss, val_acc = evaluate(
-        model,
-        val_loader,
-        device,
-    )
+    print("\nStarting Training...\n")
 
-    print("\nTrain Loss:", train_loss)
-    print("Train Accuracy:", train_acc)
+    for epoch in range(num_epochs):
 
-    print("\nValidation Loss:", val_loss)
-    print("Validation Accuracy:", val_acc)    
+        print(f"\nEpoch {epoch+1}/{num_epochs}")
+
+        train_loss, train_acc = train_one_epoch(
+            model,
+            train_loader,
+            optimizer,
+            device,
+        )
+
+        val_loss, val_acc = evaluate(
+            model,
+            val_loader,
+            device,
+        )
+
+        print(f"\nTrain Loss: {train_loss:.4f}")
+        print(f"Train Accuracy: {train_acc:.4f}")
+
+        print(f"Validation Loss: {val_loss:.4f}")
+        print(f"Validation Accuracy: {val_acc:.4f}")
 
     
