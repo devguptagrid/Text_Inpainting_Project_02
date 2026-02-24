@@ -36,17 +36,19 @@ if __name__ == "__main__":
     )
 
     train_data = TextInpaintingDataset(
-        sequences=train_sequences,
-        tokenizer=tokenizer,
-        mask_type="span",
-        mask_ratio=0.25,
-    )
+    sequences=train_sequences,
+    tokenizer=tokenizer,
+    mask_type="span",
+    mask_ratio=0.25,
+    dynamic_masking=True,   # training = dynamic
+)
 
     val_data = TextInpaintingDataset(
         sequences=val_sequences,
         tokenizer=tokenizer,
         mask_type="span",
         mask_ratio=0.25,
+        dynamic_masking=False,  # validation = fixed
     )
 
 
