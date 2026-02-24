@@ -22,28 +22,25 @@ class DiffusionBert(nn.Module):
         self.timestep_embedding = nn.Embedding(T, hidden_dim)
 
     def forward(self, input_ids, t, attention_mask=None):
-        """
-        input_ids: (batch_size, seq_len)
-        t:         (batch_size,)
-        """
 
-        # Get base embeddings from BERT
-        embeddings = self.bert_mlm.bert.embeddings(input_ids)
+        # Get token embeddings
+        token_embeddings = self.bert_mlm.bert.embeddings(input_ids)
 
         # Get timestep embeddings
         t_embed = self.timestep_embedding(t)  # (batch_size, hidden_dim)
+        t_embed = t_embed.unsqueeze(1)        # (batch_size, 1, hidden_dim)
 
-        # Expand timestep embedding across sequence length
-        t_embed = t_embed.unsqueeze(1)  # (batch_size, 1, hidden_dim)
-        embeddings = embeddings + t_embed
+        # Add timestep to token embeddings
+        embeddings = token_embeddings + t_embed
 
-        # Forward through encoder
-        encoder_outputs = self.bert_mlm.bert.encoder(
-            embeddings,
-            attention_mask=attention_mask
+        # Call full BERT model properly
+        outputs = self.bert_mlm.bert(
+            inputs_embeds=embeddings,
+            attention_mask=attention_mask,
+            return_dict=True,
         )
 
-        sequence_output = encoder_outputs.last_hidden_state
+        sequence_output = outputs.last_hidden_state
 
         # MLM head
         logits = self.bert_mlm.cls(sequence_output)
