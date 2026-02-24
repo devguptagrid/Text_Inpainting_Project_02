@@ -39,3 +39,37 @@ def train_one_epoch(model, dataloader, optimizer, device): ##function for input 
     avg_acc = total_acc / len(dataloader)
     return avg_loss, avg_acc
 
+def evaluate(model, dataloader, device):
+    model.eval()
+
+    total_loss = 0
+    total_acc = 0
+
+    with torch.no_grad():
+        for batch in dataloader:
+
+            input_ids = batch["input_ids"].to(device)
+            target_ids = batch["target_ids"].to(device)
+            mask_positions = batch["mask_positions"].to(device)
+
+            logits = model(input_ids)
+
+            loss = masked_cross_entropy_loss(
+                logits,
+                target_ids,
+                mask_positions,
+            )
+
+            acc = masked_accuracy(
+                logits,
+                target_ids,
+                mask_positions,
+            )
+
+            total_loss += loss.item()
+            total_acc += acc
+
+    avg_loss = total_loss / len(dataloader)
+    avg_acc = total_acc / len(dataloader)
+
+    return avg_loss, avg_acc
