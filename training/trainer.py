@@ -1,13 +1,13 @@
 import torch
 from tqdm import tqdm ## progress bar for training loop
 from training.loss import masked_cross_entropy_loss
-
+from evaluation.metrics import masked_accuracy
 
 def train_one_epoch(model, dataloader, optimizer, device): ##function for input model as TransformerDenoiser
     model.train()
 
     total_loss = 0
-
+    total_acc=0
     progress_bar = tqdm(dataloader, desc="Training")
 
     for batch in progress_bar:
@@ -27,10 +27,15 @@ def train_one_epoch(model, dataloader, optimizer, device): ##function for input 
 
         loss.backward() ##compte gradienyts wrt loss
         optimizer.step() ## update model parameters based on computed gradients
-
+        acc = masked_accuracy( ## computes the accuracy of the model's predictions for the masked tokens by comparing the predicted token IDs (obtained by taking the argmax of the logits) with the true target token IDs, but only for the positions that were masked, giving a measure of how well the model is reconstructing the masked tokens.
+            logits,
+            target_ids,
+            mask_positions,
+        )
         total_loss += loss.item() ## accumulate loss for the epoch to compute average loss later
-
-        progress_bar.set_postfix(loss=loss.item()) ## update the progress bar to show the current loss for the batch
+        total_acc += acc ## accumulate accuracy for the epoch to compute average accuracy later
+        progress_bar.set_postfix(loss=loss.item(), acc=acc) ## update the progress bar to show the current loss and accuracy for the batch
     avg_loss = total_loss / len(dataloader) ##give mean loss across batches
+    avg_acc = total_acc / len(dataloader)
+    return avg_loss, avg_acc
 
-    return avg_loss

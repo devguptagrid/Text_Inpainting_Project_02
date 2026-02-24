@@ -5,7 +5,6 @@ from data.preprocessing import get_tokenizer, tokenize_dataset, create_fixed_len
 from data.dataset import TextInpaintingDataset
 from models.transformer import TransformerDenoiser
 from training.trainer import train_one_epoch
-from evaluation.metrics import masked_accuracy
 
 from torch.utils.data import DataLoader
 import torch
@@ -48,7 +47,7 @@ if __name__ == "__main__":
     )
 
     print("Training for 1 epoch...")
-    avg_loss = train_one_epoch(
+    avg_loss, avg_acc = train_one_epoch(
         model,
         train_loader,
         optimizer,
@@ -56,30 +55,6 @@ if __name__ == "__main__":
     )
 
     print("Average Loss:", avg_loss)
-
-    # ---- Evaluate Accuracy ----
-    model.eval()
-    total_acc = 0
-    count = 0
-
-    with torch.no_grad():
-        for batch in train_loader:
-
-            input_ids = batch["input_ids"].to(device) ## masked input token IDs, e.g. [101, 2023, 103, 103, 6251, ..., 102]
-            target_ids = batch["target_ids"].to(device) ## original input token IDs (ground truth), e.g. [101, 2023, 2003, 1037, 6251, ..., 102]
-            mask_positions = batch["mask_positions"].to(device) ## boolean tensor indicating masked positions, e.g. [False, False, True, True, False, ...]
-
-            logits = model(input_ids) ## forward pass to get predicted logits for each token in the input sequence, shape (batch_size, seq_len, vocab_size)
-
-            acc = masked_accuracy(
-                logits,
-                target_ids,
-                mask_positions,
-            )
-
-            total_acc += acc ## accumulate accuracy for each batch to compute average accuracy later
-            count += 1 ## count number of batches to compute average accuracy across all batches
-
-    avg_acc = total_acc / count
-
     print("Masked Token Accuracy:", avg_acc)
+
+    
