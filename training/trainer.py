@@ -17,8 +17,8 @@ def train_one_epoch(model, dataloader, optimizer, device): ##function for input 
         mask_positions = batch["mask_positions"].to(device)
 
         optimizer.zero_grad() ## clears old gradients from the last step before computing new gradients for the current batch, preventing gradient accumulation across batches which can lead to incorrect updates and increased memory usage.
-
-        logits = model(input_ids) ## forward pass through the model to get predicted logits for each token in the input sequence
+        attention_mask = torch.ones_like(input_ids)
+        logits = model(input_ids, attention_mask=attention_mask) ## forward pass through the model to get predicted logits for each token in the input sequence
         loss = masked_cross_entropy_loss( ## computes the loss by comparing the predicted logits with the true target token IDs, but only for the positions that were masked (where mask_positions is True), ensuring that the model is only penalized for incorrect predictions on the masked tokens and not on the unmasked tokens.
             logits,
             target_ids,
@@ -51,8 +51,8 @@ def evaluate(model, dataloader, device):
             input_ids = batch["input_ids"].to(device)
             target_ids = batch["target_ids"].to(device)
             mask_positions = batch["mask_positions"].to(device)
-
-            logits = model(input_ids)
+            attention_mask = torch.ones_like(input_ids)
+            logits = model(input_ids, attention_mask)
 
             loss = masked_cross_entropy_loss(
                 logits,

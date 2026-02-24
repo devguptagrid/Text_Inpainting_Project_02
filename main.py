@@ -3,7 +3,7 @@ from utils.device import get_device
 from data.load_data import load_wikitext, clean_dataset
 from data.preprocessing import get_tokenizer, tokenize_dataset, create_fixed_length_sequences
 from data.dataset import TextInpaintingDataset
-from models.transformer import TransformerDenoiser
+from models.transformer import BertDenoiser
 from training.trainer import train_one_epoch, evaluate
 
 from torch.utils.data import DataLoader
@@ -64,11 +64,7 @@ if __name__ == "__main__":
         shuffle=False,
     )
 
-    model = TransformerDenoiser(
-    hidden_dim=384,
-    num_layers=6,
-    num_heads=6,
-    ).to(device)
+    model = BertDenoiser().to(device)
 
     optimizer = torch.optim.AdamW(
         model.parameters(),
@@ -76,7 +72,7 @@ if __name__ == "__main__":
         weight_decay=0.01,
     )
 
-    num_epochs = 5
+    num_epochs = 3
 
     print("\nStarting Training...\n")
 
