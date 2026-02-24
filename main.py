@@ -64,7 +64,11 @@ if __name__ == "__main__":
         shuffle=False,
     )
 
-    model = TransformerDenoiser().to(device)
+    model = TransformerDenoiser(
+    hidden_dim=384,
+    num_layers=6,
+    num_heads=6,
+    ).to(device)
 
     optimizer = torch.optim.AdamW(
         model.parameters(),

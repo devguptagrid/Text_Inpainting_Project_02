@@ -9,9 +9,9 @@ class TransformerDenoiser(nn.Module): ##defining a pytorch neural network
     def __init__(
         self, ## constructor method to initialize the model's parameters and layers
         vocab_size=30522,  ## standard BERT vocab size, number of possible tokens the model can predict.
-        hidden_dim=256, ## smaller hidden dimension for efficiency
-        num_layers=4, ##number of stacked transformer encoder layers
-        num_heads=4, ## number of attention heads in each transformer layer
+        hidden_dim=384, ## smaller hidden dimension for efficiency
+        num_layers=6, ##number of stacked transformer encoder layers
+        num_heads=6, ## number of attention heads in each transformer layer
         max_seq_len=256,
         dropout=0.1, ##regularization to prevent overfitting
     ):
