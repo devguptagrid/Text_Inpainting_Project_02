@@ -219,7 +219,7 @@ So:
 
 Split	Raw Rows (after cleaning)	256-token sequences
 
-Train	~23k lines	
+Train	~23k lines	which is around 2000000 tokens 
 
 9180 sequences
 
@@ -260,3 +260,16 @@ So:
 
 
 That’s exactly what you’re seeing.
+
+
+
+## 📊 Masking Experiments Results after 3 epochs
+
+| Mask Type | Ratio | Train Accuracy | Validation Accuracy | Train Loss | Validation Loss |
+|------------|--------|----------------|---------------------|------------|-----------------|
+| Random     | 0.10   | 57.83          | 57.36               | 2.1694     | 2.2301          |
+| Random     | 0.25   | 53.07          | 51.85               | 2.4602     | 2.6114          |
+| Random     | 0.40   | 45.01          | 43.90               | 3.0190     | 3.2059          |
+| Span       | 0.10   | 20.45          | 21.23               | 5.1082     | 5.1766          |
+| Span       | 0.25   | 19.44          | 19.94               | 5.0969     | 5.2521          |
+| Span       | 0.40   | 17.51          | 17.91               | 5.2213     | 5.4480          |
