@@ -18,15 +18,19 @@ class DiscreteDiffusionForward:
         self.alpha_bars = torch.cumsum(self.betas, dim=0)
         self.alpha_bars = torch.clamp(self.alpha_bars, max=0.95)
 
+    def to(self, device):
+        self.alpha_bars = self.alpha_bars.to(device)
+        return self
+    
     def sample_timestep(self, batch_size, device):
         """
         Sample random timestep t ∈ [1, T]
         """
-        return torch.randint(1, self.T + 1, (batch_size,), device=device)
+        return torch.randint(3, 7, (batch_size,), device=device)
 
     def corrupt(self, x0, t):
         """
-        Generate x_t from x0.
+        Vectorized corruption.
         x0: (batch_size, seq_len)
         t:  (batch_size,)
         """
@@ -34,12 +38,19 @@ class DiscreteDiffusionForward:
         batch_size, seq_len = x0.shape
         device = x0.device
 
+        # Get alpha_t for each sample
+        alpha_bars = self.alpha_bars
+        alpha_t = alpha_bars[t - 1]
+
+        # Expand to match sequence
+        alpha_t = alpha_t.unsqueeze(1).expand(-1, seq_len)
+
+        # Generate random mask
+        random_tensor = torch.rand(batch_size, seq_len, device=device)
+
+        mask = random_tensor < alpha_t
+
         x_t = x0.clone()
-
-        for i in range(batch_size):
-            alpha_t = self.alpha_bars[t[i] - 1]
-
-            mask = torch.rand(seq_len, device=device) < alpha_t
-            x_t[i][mask] = self.mask_token_id
+        x_t[mask] = self.mask_token_id
 
         return x_t

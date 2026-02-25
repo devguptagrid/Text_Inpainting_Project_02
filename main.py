@@ -40,7 +40,7 @@ if __name__ == "__main__":
         tokenized_val,
         seq_len=256
     )
-    num_epochs = 3
+    num_epochs = 6
 
     if mode == "baseline":
         train_data = TextInpaintingDataset(
@@ -120,13 +120,13 @@ if __name__ == "__main__":
 
         train_loader = DataLoader(
             train_data,
-            batch_size=32,
+            batch_size=16,
             shuffle=True,
         )
 
         val_loader = DataLoader(
             val_data,
-            batch_size=32,
+            batch_size=16,
             shuffle=False,
         )
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
         diffusion_forward = DiscreteDiffusionForward(
             T=T,
             mask_token_id=tokenizer.mask_token_id
-        )
+        ).to(device)
 
         optimizer = torch.optim.AdamW(
             model.parameters(),

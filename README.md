@@ -273,3 +273,13 @@ That’s exactly what you’re seeing.
 | Span       | 0.10   | 20.45          | 21.23               | 5.1082     | 5.1766          |
 | Span       | 0.25   | 19.44          | 19.94               | 5.0969     | 5.2521          |
 | Span       | 0.40   | 17.51          | 17.91               | 5.2213     | 5.4480          |
+
+
+
+## Diffusion model results
+
+### after 6 epochs for batch size 16 , span masking and 0.25 mask ratio
+Train Loss: 5.0208
+Train Accuracy: 0.2280
+Validation Loss: 4.9633
+Validation Accuracy: 0.2439

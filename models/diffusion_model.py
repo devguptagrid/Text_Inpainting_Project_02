@@ -36,7 +36,6 @@ class DiffusionBert(nn.Module):
         # Call full BERT model properly
         outputs = self.bert_mlm.bert(
             inputs_embeds=embeddings,
-            attention_mask=attention_mask,
             return_dict=True,
         )
 
