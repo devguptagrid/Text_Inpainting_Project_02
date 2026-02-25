@@ -17,7 +17,10 @@ def train_diffusion_epoch(
     total_correct = 0
     total_masked = 0
 
-    for batch in tqdm(dataloader, desc="Training Diffusion"):
+    accumulation_steps = 2
+    optimizer.zero_grad()
+
+    for step, batch in enumerate(tqdm(dataloader, desc="Training Diffusion")):
 
         input_ids = batch["input_ids"].to(device)
         target_ids = batch["target_ids"].to(device)
@@ -44,11 +47,16 @@ def train_diffusion_epoch(
             target_ids[mask]
         )
 
-        optimizer.zero_grad()
+        # 🔥 Divide loss for accumulation
+        loss = loss / accumulation_steps
         loss.backward()
-        optimizer.step()
 
-        total_loss += loss.item()
+        # Update only every accumulation_steps
+        if (step + 1) % accumulation_steps == 0:
+            optimizer.step()
+            optimizer.zero_grad()
+
+        total_loss += loss.item() * accumulation_steps
 
         preds = logits.argmax(dim=-1)
         correct = (preds[mask] == target_ids[mask]).sum().item()

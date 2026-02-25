@@ -283,3 +283,19 @@ Train Loss: 5.0208
 Train Accuracy: 0.2280
 Validation Loss: 4.9633
 Validation Accuracy: 0.2439
+
+
+## Gradient Accumulation (Effective Batch Size 32 on MPS)
+
+During diffusion training on Apple MPS, using batch_size=32 caused significant slowdown due to memory pressure from BERT-base and multi-step diffusion.
+
+To maintain stable training while respecting project requirements (32–64 batch size), we used:
+
+batch_size = 16
+gradient_accumulation_steps = 2
+
+This results in an effective batch size of 32, because gradients from two mini-batches of 16 are accumulated before performing a single optimizer update.
+
+### Why This Is Valid
+
+Gradients are additive. Accumulating gradients across multiple smaller batches and updating once is mathematically equivalent to training with a larger batch.
