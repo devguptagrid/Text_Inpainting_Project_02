@@ -309,6 +309,10 @@ This results in an effective batch size of 32, because gradients from two mini-b
 Gradients are additive. Accumulating gradients across multiple smaller batches and updating once is mathematically equivalent to training with a larger batch.
 
 ## after 6 epochs for batch size 16 and effective batch size 32 by gradient accumulation, span masking and 0.25 mask ratio for 73k sequences without mask conditioning
+Train Loss: 4.5649
+Train Accuracy: 0.2608
+Validation Loss: 4.9749
+Validation Accuracy: 0.2458
 
 
 ## in
@@ -442,6 +446,14 @@ Validation Accuracy: 19.89%
 - 73k sequences
 - No explicit mask conditioning
 - Evaluated pure diffusion denoising.
+
+Train Loss: 4.5649
+
+Train Accuracy: 26.08%
+
+Validation Loss: 4.9749
+
+Validation Accuracy: 24.58%
 
 ---
 

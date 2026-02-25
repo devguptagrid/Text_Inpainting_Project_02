@@ -14,7 +14,7 @@ from diffusion.forward_process import DiscreteDiffusionForward
 from training.diffusion_trainer import train_diffusion_epoch, evaluate_diffusion
 from data.diffusion_dataset import DiffusionDataset
 
-mode = "baseline"   # "baseline" or "diffusion"
+mode = "diffusion"   # "baseline" or "diffusion"
 
 if __name__ == "__main__":
     set_seed(42)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         seq_len=256,
         stride=32
     )
-    num_epochs = 3
+    num_epochs = 6
 
     if mode == "baseline":
         train_data = TextInpaintingDataset(
