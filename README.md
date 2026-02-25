@@ -221,11 +221,11 @@ Split	Raw Rows (after cleaning)	256-token sequences
 
 Train	~23k lines	which is around 2000000 tokens 
 
-9180 sequences
+9180 unique sequences
 
 Validation	~2.4k lines	
 
-951 sequences
+951 unique sequences
 
 So nothing is being duplicated — it’s just:
 
@@ -263,7 +263,7 @@ That’s exactly what you’re seeing.
 
 
 
-## 📊 Masking Experiments Results after 3 epochs
+## 📊 Baseline Masking Experiments Results after 3 epochs for 9k sequences batch size 32
 
 | Mask Type | Ratio | Train Accuracy | Validation Accuracy | Train Loss | Validation Loss |
 |------------|--------|----------------|---------------------|------------|-----------------|
@@ -274,11 +274,19 @@ That’s exactly what you’re seeing.
 | Span       | 0.25   | 19.44          | 19.94               | 5.0969     | 5.2521          |
 | Span       | 0.40   | 17.51          | 17.91               | 5.2213     | 5.4480          |
 
+## Baseline model with 73k sequences with batch size of 32 without gradient accumulation for span masking and mask ratio of 0.25 after 3 epochs
+Train Loss: 4.5502
+
+Train Accuracy: 0.2179
+
+Validation Loss: 5.4015
+
+Validation Accuracy: 0.1989
 
 
 ## Diffusion model results
 
-### after 6 epochs for batch size 16 , span masking and 0.25 mask ratio
+### after 6 epochs for batch size 16 , span masking and 0.25 mask ratio for 9k sequences
 Train Loss: 5.0208
 Train Accuracy: 0.2280
 Validation Loss: 4.9633
@@ -299,3 +307,195 @@ This results in an effective batch size of 32, because gradients from two mini-b
 ### Why This Is Valid
 
 Gradients are additive. Accumulating gradients across multiple smaller batches and updating once is mathematically equivalent to training with a larger batch.
+
+## after 6 epochs for batch size 16 and effective batch size 32 by gradient accumulation, span masking and 0.25 mask ratio for 73k sequences without mask conditioning
+
+
+## in
+
+
+## Big Picture Strategy
+
+### Phase 1:
+
+Large-data baseline
+
+Large-data diffusion (implicit masking)
+
+### Phase 2:
+
+Add explicit mask conditioning
+
+Compare improvement
+
+### Phase 3:
+
+Span vs random under diffusion
+
+Ratio 0.1 / 0.25 / 0.4
+
+Conditioning dropout
+
+### Phase 4:
+
+Inference experiments (temperature, top-k)
+
+UI
+
+
+
+
+
+
+## 🚀 Project Progression & Experiments
+
+### 1️⃣ Baseline Model (From Scratch)
+- Built a Transformer encoder model from scratch.
+- Trained on ~9k sequences.
+- Batch size: 32
+- Masking: Span & Random
+- Result: **5–6% masked-token accuracy**
+- Conclusion: Model capacity and/or data scale insufficient.
+
+---
+
+### 2️⃣ Pretrained BERT Fine-Tuning Baseline
+- Used `bert-base-uncased` (`BertForMaskedLM`).
+- Fine-tuned for:
+  - Mask types: Span & Random
+  - Mask ratios: 10%, 25%, 40%
+- Training:
+  - 3 epochs
+  - 9k sequences
+  - Batch size: 32
+- Observed accuracy trends across masking strategies.
+
+| Mask Type | Ratio | Train Accuracy% | Validation Accuracy% | Train Loss | Validation Loss |
+|------------|--------|----------------|---------------------|------------|-----------------|
+| Random     | 0.10   | 57.83          | 57.36               | 2.1694     | 2.2301          |
+| Random     | 0.25   | 53.07          | 51.85               | 2.4602     | 2.6114          |
+| Random     | 0.40   | 45.01          | 43.90               | 3.0190     | 3.2059          |
+| Span       | 0.10   | 20.45          | 21.23               | 5.1082     | 5.1766          |
+| Span       | 0.25   | 19.44          | 19.94               | 5.0969     | 5.2521          |
+| Span       | 0.40   | 17.51          | 17.91               | 5.2213     | 5.4480          |
+
+---
+
+### 3️⃣ Initial Diffusion Model
+- Implemented Discrete Diffusion (D3PM-style).
+- Training:
+  - 6 epochs
+  - Batch size: 16
+  - Span masking
+  - Mask ratio: 0.25
+  - 9k sequences
+- Goal: Compare diffusion vs single-step MLM baseline.
+
+Train Loss: 5.0208
+
+Train Accuracy: 22.80%
+
+Validation Loss: 4.9633
+
+Validation Accuracy: 24.39%
+
+---
+
+### 4️⃣ Increased Dataset Size (Sliding Window)
+- Switched from unique chunking to sliding-window chunking.
+- Increased sequences from ~9k → ~73k.
+- Improved training diversity and coverage.
+
+---
+
+### 5️⃣ Baseline Model on 73k Sequences
+- Span masking
+- Mask ratio: 0.25
+- Batch size: 32
+- 3 epochs
+- No gradient accumulation
+- Evaluated scaling effect of larger dataset.
+
+Train Loss: 4.5502
+
+Train Accuracy: 21.79%
+
+Validation Loss: 5.4015
+
+Validation Accuracy: 19.89%
+
+---
+
+### 6️⃣ Gradient Accumulation Introduced
+- Enabled effective larger batch sizes.
+- Reduced GPU/MPS memory pressure.
+- Improved training stability.
+
+---
+
+### 7️⃣ Diffusion Model (No Mask Conditioning)
+- 6 epochs
+- Batch size: 16
+- Effective batch size: 32 (via gradient accumulation)
+- Span masking
+- Mask ratio: 0.25
+- 73k sequences
+- No explicit mask conditioning
+- Evaluated pure diffusion denoising.
+
+---
+
+### 8️⃣ Diffusion Model (With Mask Conditioning)
+- Same setup as above, but:
+  - Added explicit mask conditioning
+- 6 epochs
+- Batch size: 16
+- Effective batch size: 32
+- Span masking
+- Mask ratio: 0.25
+- 73k sequences
+- Compared performance vs non-conditioned diffusion.
+
+---
+
+### 9️⃣ Full Diffusion Experiments
+- Mask types: Span & Random
+- Mask ratios: 10%, 25%, 40%
+- Conditioning dropout: 0.0, 0.1
+- Batch size: 16 (effective 32)
+- Gradient accumulation enabled
+- Evaluated robustness across corruption levels.
+
+---
+
+### 🔟 Inference Experiments
+Tested decoding strategies:
+
+- Temperature values: 0.8, 1.0, 1.2
+- Top-k sampling: 0, 20, 50
+
+Goal:
+- Balance between diversity and accuracy.
+- Improve text coherence in inpainting.
+
+---
+
+### 1️⃣1️⃣ User Interface
+- Built Gradio-based UI:
+  - Paste text
+  - Auto-mask spans
+  - Diffusion-based fill
+  - Highlight reconstructed tokens
+- Demonstrates qualitative results interactively.
+
+---
+
+## 📊 Final Objective
+
+Target: **35%+ masked-token accuracy**  
+Approach:
+- Scaling dataset
+- Diffusion modeling
+- Mask conditioning
+- Gradient accumulation
+- Controlled decoding

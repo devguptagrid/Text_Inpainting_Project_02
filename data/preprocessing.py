@@ -34,27 +34,28 @@ def tokenize_dataset(dataset, tokenizer):
     return tokenized_dataset
 
 
-def create_fixed_length_sequences(tokenized_dataset, seq_len=256):
+def create_fixed_length_sequences(tokenized_dataset, seq_len=256, stride=64):
     """
-    Concatenate all tokenized inputs and split into fixed-length chunks.
+    Create overlapping sequences using sliding window.
+
+    seq_len: length of each sequence
+    stride: step size between windows (smaller stride = more data)
     """
 
-    print(f"[INFO] Creating fixed-length sequences (seq_len={seq_len})...")
+    print(f"[INFO] Creating fixed-length sequences (seq_len={seq_len}, stride={stride})...")
 
-    # Flatten list of token lists
-    all_tokens = list(chain(*tokenized_dataset["input_ids"]))
+    all_tokens = []
 
-    # Drop remainder tokens that don't fit into full seq_len
-    total_length = len(all_tokens)
-    total_length = (total_length // seq_len) * seq_len
+    # Concatenate all input_ids
+    for example in tokenized_dataset:
+        all_tokens.extend(example["input_ids"])
 
-    all_tokens = all_tokens[:total_length] ## removes leftover tokens that don't fit into a full sequence
+    sequences = []
 
-    # Create chunks
-    sequences = [
-        all_tokens[i : i + seq_len]
-        for i in range(0, total_length, seq_len)
-    ]
+    # Sliding window
+    for start_idx in range(0, len(all_tokens) - seq_len, stride):
+        end_idx = start_idx + seq_len
+        sequences.append(all_tokens[start_idx:end_idx])
 
     print(f"[INFO] Total sequences created: {len(sequences)}")
 

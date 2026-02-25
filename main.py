@@ -14,7 +14,7 @@ from diffusion.forward_process import DiscreteDiffusionForward
 from training.diffusion_trainer import train_diffusion_epoch, evaluate_diffusion
 from data.diffusion_dataset import DiffusionDataset
 
-mode = "diffusion"   # "baseline" or "diffusion"
+mode = "baseline"   # "baseline" or "diffusion"
 
 if __name__ == "__main__":
     set_seed(42)
@@ -31,16 +31,18 @@ if __name__ == "__main__":
     tokenized_train = tokenize_dataset(train_dataset, tokenizer)
     train_sequences = create_fixed_length_sequences(
         tokenized_train,
-        seq_len=256
-    )
+        seq_len=256,
+        stride=32   # to get 50k+sequences
+)
 
     # Tokenize validation
     tokenized_val = tokenize_dataset(val_dataset, tokenizer)
     val_sequences = create_fixed_length_sequences(
         tokenized_val,
-        seq_len=256
+        seq_len=256,
+        stride=32
     )
-    num_epochs = 6
+    num_epochs = 3
 
     if mode == "baseline":
         train_data = TextInpaintingDataset(
