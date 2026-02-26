@@ -468,6 +468,14 @@ Validation Accuracy: 24.58%
 - 73k sequences
 - Compared performance vs non-conditioned diffusion.
 
+1. with T=8 ; best score at 4th epoch
+
+
+Train Loss: 4.7306
+Train Accuracy: 0.2472
+Validation Loss: 4.9777
+Validation Accuracy: 0.2447
+
 ---
 
 ### 9️⃣ Full Diffusion Experiments

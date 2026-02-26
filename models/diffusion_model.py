@@ -16,32 +16,33 @@ class DiffusionBert(nn.Module):
         # Load pretrained MLM model
         self.bert_mlm = BertForMaskedLM.from_pretrained("bert-base-uncased")
 
-        hidden_dim = self.bert_mlm.config.hidden_size
+        self.hidden_dim = self.bert_mlm.config.hidden_size ##internal vector dimension (768 for bert-base) used throughout BERT for token representations, attention, feedforward layers, and output projection
 
         # Timestep embedding
-        self.timestep_embedding = nn.Embedding(T, hidden_dim)
+        self.timestep_embedding = torch.nn.Embedding(T, self.hidden_dim)
+        self.mask_embedding = torch.nn.Embedding(2, self.hidden_dim)
+    def forward(self, x_t, t_embed, mask_positions, attention_mask=None):
 
-    def forward(self, input_ids, t, attention_mask=None):
+        # 1️⃣ Get full BERT embeddings (this keeps position + layernorm + dropout)
+        bert_embeddings = self.bert_mlm.bert.embeddings(input_ids=x_t)
 
-        # Get token embeddings
-        token_embeddings = self.bert_mlm.bert.embeddings(input_ids)
+        # 2️⃣ Timestep embedding
+        timestep_embeds = self.timestep_embedding(t_embed)  # (batch, hidden)
+        timestep_embeds = timestep_embeds.unsqueeze(1)      # (batch, 1, hidden)
 
-        # Get timestep embeddings
-        t_embed = self.timestep_embedding(t)  # (batch_size, hidden_dim)
-        t_embed = t_embed.unsqueeze(1)        # (batch_size, 1, hidden_dim)
+        # 3️⃣ Mask embedding (0 = clean, 1 = corrupted)
+        mask_embeds = self.mask_embedding(mask_positions.long())
 
-        # Add timestep to token embeddings
-        embeddings = token_embeddings + t_embed
+        # 4️⃣ Combine all embeddings
+        embeddings = bert_embeddings + timestep_embeds + mask_embeds
 
-        # Call full BERT model properly
+        # 5️⃣ Forward through BERT encoder correctly
         outputs = self.bert_mlm.bert(
             inputs_embeds=embeddings,
-            return_dict=True,
+            attention_mask=attention_mask,
         )
 
         sequence_output = outputs.last_hidden_state
-
-        # MLM head
         logits = self.bert_mlm.cls(sequence_output)
 
         return logits
