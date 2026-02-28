@@ -42,7 +42,7 @@ if __name__ == "__main__":
         seq_len=256,
         stride=32
     )
-    num_epochs = 6
+    num_epochs = 4
 
     if mode == "baseline":
         train_data = TextInpaintingDataset(
@@ -116,9 +116,27 @@ if __name__ == "__main__":
 
         print("\nRunning DIFFUSION training...\n")
         
-        T = 8
-        train_data = DiffusionDataset(train_sequences)
-        val_data = DiffusionDataset(val_sequences)
+        T = 12
+        mask_type = "span"
+        mask_ratio = 0.40
+
+        best_val_acc = 0.0
+
+        train_data = TextInpaintingDataset(
+            sequences=train_sequences,
+            tokenizer=tokenizer,
+            mask_type=mask_type,
+            mask_ratio=mask_ratio,
+            dynamic_masking=True,
+        )
+
+        val_data = TextInpaintingDataset(
+            sequences=val_sequences,
+            tokenizer=tokenizer,
+            mask_type=mask_type,
+            mask_ratio=mask_ratio,
+            dynamic_masking=False,
+        )
 
         train_loader = DataLoader(
             train_data,
@@ -143,7 +161,7 @@ if __name__ == "__main__":
             model.parameters(),
             lr=3e-5,
         )
-
+        print(train_loader.dataset[0].keys())
         for epoch in range(num_epochs):
 
             print(f"\nEpoch {epoch+1}/{num_epochs}")
@@ -170,3 +188,12 @@ if __name__ == "__main__":
 
             print(f"Validation Loss: {val_loss:.4f}")
             print(f"Validation Accuracy: {val_acc:.4f}")
+
+            # 🔥 SAVE BEST MODEL
+            if val_acc > best_val_acc:
+                best_val_acc = val_acc
+                torch.save(
+                    model.state_dict(),
+                    f"diffusion_{mask_type}_{mask_ratio}_T{T}.pt"
+                )
+                print("✅ Best model saved.")

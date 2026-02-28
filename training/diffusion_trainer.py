@@ -32,15 +32,17 @@ def train_diffusion_epoch(
         t_embed = t - 1  # convert to 0-index
 
         # Generate x_t
-        x_t = diffusion_forward.corrupt(input_ids, t)
-        mask_positions = (x_t == tokenizer.mask_token_id)
+        span_mask = batch["mask_positions"].to(device)
+        x_t = diffusion_forward.corrupt(target_ids, t, span_mask)
+        mask_positions = span_mask
+        
         attention_mask = torch.ones_like(x_t, dtype=torch.bool)
 
         # Forward pass
         logits = model(x_t, t_embed, mask_positions, attention_mask)
 
         # Compute loss only on masked positions
-        mask = (x_t == tokenizer.mask_token_id)
+        mask = span_mask
 
         loss = F.cross_entropy(
             logits[mask],
@@ -93,13 +95,15 @@ def evaluate_diffusion(
             t = diffusion_forward.sample_timestep(batch_size, device)
             t_embed = t - 1
 
-            x_t = diffusion_forward.corrupt(input_ids, t)
-            mask_positions = (x_t == tokenizer.mask_token_id)
+            span_mask = batch["mask_positions"].to(device)
+
+            x_t = diffusion_forward.corrupt(target_ids, t, span_mask)
+
             attention_mask = torch.ones_like(x_t, dtype=torch.bool)
 
-            logits = model(x_t, t_embed, mask_positions, attention_mask)
+            logits = model(x_t, t_embed, span_mask, attention_mask)
 
-            mask = (x_t == tokenizer.mask_token_id)
+            mask = span_mask
 
             loss = F.cross_entropy(
                 logits[mask],

@@ -468,13 +468,29 @@ Validation Accuracy: 24.58%
 - 73k sequences
 - Compared performance vs non-conditioned diffusion.
 
-1. with T=8 ; best score at 4th epoch
+1. with T=8 ; 
+
+| Mask Type | Ratio | Train Accuracy% | Validation Accuracy% | Train Loss | Validation Loss |
+|------------|--------|----------------|---------------------|------------|-----------------|
+| Random     | 0.10   |           |                |      |           |
+| Random     | 0.25   |     71.24      | 69.50               | 1.3612     | 1.5401          |
+| Random     | 0.40   |           |                |      |           |
+| Span       | 0.10   |           |                |      |           |
+| Span       | 0.25   | 49.57          | 48.97               | 2.8369     | 3.0832          |
+| Span       | 0.40   |           |                |      |           |
 
 
-Train Loss: 4.7306
-Train Accuracy: 0.2472
-Validation Loss: 4.9777
-Validation Accuracy: 0.2447
+2. with T=12; best score 
+
+| Mask Type | Ratio | Train Accuracy% | Validation Accuracy% | Train Loss | Validation Loss |
+|------------|--------|----------------|---------------------|------------|-----------------|
+| Random     | 0.10   |           |                |      |           |
+| Random     | 0.25   |     71.24      | 69.50               | 1.3612     | 1.5401          |
+| Random     | 0.40   |           |                |      |           |
+| Span       | 0.10   |  49.84         |  50.82              |  2.9007    |  2.9259         |
+| Span       | 0.25   | 49.57          | 48.97               | 2.8369     | 3.0832          |
+| Span       | 0.40   |           |                |      |           |
+
 
 ---
 
