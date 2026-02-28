@@ -118,7 +118,7 @@ if __name__ == "__main__":
         
         T = 12
         mask_type = "span"
-        mask_ratio = 0.40
+        mask_ratio = 0.10
 
         best_val_acc = 0.0
 
@@ -150,7 +150,7 @@ if __name__ == "__main__":
             shuffle=False,
         )
 
-        model = DiffusionBert(T=T).to(device)
+        model = DiffusionBert(T=T, conditioning_dropout=0.1).to(device)
 
         diffusion_forward = DiscreteDiffusionForward(
             T=T,
@@ -194,6 +194,6 @@ if __name__ == "__main__":
                 best_val_acc = val_acc
                 torch.save(
                     model.state_dict(),
-                    f"diffusion_{mask_type}_{mask_ratio}_T{T}.pt"
+                    f"diffusion_{mask_type}_{mask_ratio}_T{T}_dropout_0.1.pt"
                 )
                 print("✅ Best model saved.")

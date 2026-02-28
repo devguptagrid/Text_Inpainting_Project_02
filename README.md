@@ -473,26 +473,27 @@ Validation Accuracy: 24.58%
 | Mask Type | Ratio | Train Accuracy% | Validation Accuracy% | Train Loss | Validation Loss |
 |------------|--------|----------------|---------------------|------------|-----------------|
 | Random     | 0.10   |           |                |      |           |
-| Random     | 0.25   |     71.24      | 69.50               | 1.3612     | 1.5401          |
+| Random     | 0.25   |           |                |      |           |
 | Random     | 0.40   |           |                |      |           |
 | Span       | 0.10   |           |                |      |           |
-| Span       | 0.25   | 49.57          | 48.97               | 2.8369     | 3.0832          |
+| Span       | 0.25   | 42.65          | 42.89               | 3.3225     | 3.4671          |
 | Span       | 0.40   |           |                |      |           |
 
 
-2. with T=12; best score 
+2. with T=12; best score with dropout 0
 
 | Mask Type | Ratio | Train Accuracy% | Validation Accuracy% | Train Loss | Validation Loss |
 |------------|--------|----------------|---------------------|------------|-----------------|
-| Random     | 0.10   |           |                |      |           |
+| Random     | 0.10   |                |                     |            |                 |
 | Random     | 0.25   |     71.24      | 69.50               | 1.3612     | 1.5401          |
-| Random     | 0.40   |           |                |      |           |
+| Random     | 0.40   |                |                     |            |                 |
 | Span       | 0.10   |  49.84         |  50.82              |  2.9007    |  2.9259         |
 | Span       | 0.25   | 49.57          | 48.97               | 2.8369     | 3.0832          |
-| Span       | 0.40   |           |                |      |           |
+| Span       | 0.40   |  46.55         | 46.49               |  3.0933    |   3.2812        |
 
 
 ---
+#### Continuing with span masking 10%
 
 ### 9️⃣ Full Diffusion Experiments
 - Mask types: Span & Random
@@ -502,7 +503,12 @@ Validation Accuracy: 24.58%
 - Gradient accumulation enabled
 - Evaluated robustness across corruption levels.
 
----
+#### Span masking 10% with conditional dropout results - 
+Train Loss: 2.9033
+Train Accuracy: 0.4980
+Validation Loss: 2.9092
+Validation Accuracy: 0.5097
+
 
 ### 🔟 Inference Experiments
 Tested decoding strategies:

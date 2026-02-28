@@ -8,10 +8,11 @@ class DiffusionBert(nn.Module):
     BERT-based denoiser conditioned on diffusion timestep.
     """
 
-    def __init__(self, T):
+    def __init__(self, T, conditioning_dropout=0.0):
         super().__init__()
 
         self.T = T
+        self.conditioning_dropout = conditioning_dropout
 
         # Load pretrained MLM model
         self.bert_mlm = BertForMaskedLM.from_pretrained("bert-base-uncased")
@@ -32,6 +33,14 @@ class DiffusionBert(nn.Module):
 
         # 3️⃣ Mask embedding (0 = clean, 1 = corrupted)
         mask_embeds = self.mask_embedding(mask_positions.long())
+
+        if self.training and self.conditioning_dropout > 0:
+            dropout_mask = (
+                torch.rand(mask_embeds.shape[0], device=mask_embeds.device)
+                < self.conditioning_dropout
+            ).float().unsqueeze(1).unsqueeze(2)
+
+            mask_embeds = mask_embeds * (1 - dropout_mask)
 
         # 4️⃣ Combine all embeddings
         embeddings = bert_embeddings + timestep_embeds + mask_embeds
