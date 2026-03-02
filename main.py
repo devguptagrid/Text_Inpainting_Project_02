@@ -14,7 +14,7 @@ from diffusion.forward_process import DiscreteDiffusionForward
 from training.diffusion_trainer import train_diffusion_epoch, evaluate_diffusion
 from data.diffusion_dataset import DiffusionDataset
 
-mode = "test"   # "baseline" or "diffusion"
+mode = "inference"   # "baseline" or "diffusion"
 
 if __name__ == "__main__":
     set_seed(42)
@@ -207,6 +207,24 @@ if __name__ == "__main__":
         
     elif mode == "inference":
 
+        def highlight_generated(original_ids, generated_ids, mask_positions, tokenizer):
+            output_tokens = []
+
+            for orig_id, gen_id, is_mask in zip(
+                original_ids,
+                generated_ids,
+                mask_positions
+            ):
+                token = tokenizer.convert_ids_to_tokens(gen_id.item())
+
+                if is_mask:
+                    # Green color for replaced tokens
+                    token = f"\033[92m{token}\033[0m"
+
+                output_tokens.append(token)
+
+            return tokenizer.convert_tokens_to_string(output_tokens)
+        
         print("\nRunning INFERENCE...\n")
 
         T = 12
@@ -255,9 +273,35 @@ if __name__ == "__main__":
             device=device
         )
 
-        print("ORIGINAL:", tokenizer.decode(sample["target_ids"]))
-        print("MASKED:", tokenizer.decode(sample["input_ids"]))
-        print("GENERATED:", tokenizer.decode(generated[0]))
+        original_text = tokenizer.decode(
+            sample["target_ids"],
+            skip_special_tokens=True
+        )
+
+        masked_text = tokenizer.decode(
+            sample["input_ids"],
+            skip_special_tokens=False
+        )
+
+        highlighted_text = highlight_generated(
+            sample["target_ids"],
+            generated[0].cpu(),
+            sample["mask_positions"],
+            tokenizer
+        )
+
+        print("\n" + "="*80)
+        print("ORIGINAL:\n")
+        print(original_text)
+
+        print("\n" + "="*80)
+        print("MASKED:\n")
+        print(masked_text)
+
+        print("\n" + "="*80)
+        print("GENERATED (Highlighted Filled Tokens):\n")
+        print(highlighted_text)
+        print("="*80)
 
 
     elif mode == "test":
