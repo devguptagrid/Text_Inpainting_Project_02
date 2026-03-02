@@ -14,7 +14,7 @@ from diffusion.forward_process import DiscreteDiffusionForward
 from training.diffusion_trainer import train_diffusion_epoch, evaluate_diffusion
 from data.diffusion_dataset import DiffusionDataset
 
-mode = "inference"   # "baseline" or "diffusion"
+mode = "test"   # "baseline" or "diffusion"
 
 if __name__ == "__main__":
     set_seed(42)
@@ -24,6 +24,7 @@ if __name__ == "__main__":
 
     train_dataset = clean_dataset(dataset["train"])
     val_dataset = clean_dataset(dataset["validation"])
+    test_dataset= clean_dataset(dataset["test"])
 
     tokenizer = get_tokenizer()
 
@@ -42,6 +43,15 @@ if __name__ == "__main__":
         seq_len=256,
         stride=32
     )
+
+    # Tokenize test
+    tokenized_test = tokenize_dataset(test_dataset, tokenizer)
+    test_sequences = create_fixed_length_sequences(
+        tokenized_test,
+        seq_len=256,
+        stride=32
+    )
+
     num_epochs = 4
 
     if mode == "baseline":
@@ -73,10 +83,6 @@ if __name__ == "__main__":
             batch_size=32,
             shuffle=False,
         )
-
-        
-
-    
 
         print("\nRunning BASELINE training...\n")
 
@@ -252,3 +258,55 @@ if __name__ == "__main__":
         print("ORIGINAL:", tokenizer.decode(sample["target_ids"]))
         print("MASKED:", tokenizer.decode(sample["input_ids"]))
         print("GENERATED:", tokenizer.decode(generated[0]))
+
+
+    elif mode == "test":
+
+        print("\nRunning TEST evaluation...\n")
+
+        best_val_acc = 0.0
+        T = 12
+        mask_ratio = 0.10   # your best model
+        batch_size = 16
+
+        # Create test dataset
+        test_data = TextInpaintingDataset(
+            sequences=test_sequences,
+            tokenizer=tokenizer,
+            mask_type="span",
+            mask_ratio=mask_ratio,
+            dynamic_masking=False,  # IMPORTANT
+        )
+
+        test_loader = DataLoader(
+            test_data,
+            batch_size=batch_size,
+            shuffle=False,
+        )
+
+        # Load trained model
+        model = DiffusionBert(
+            T=T,
+            conditioning_dropout=0.1,
+        ).to(device)
+
+        model.load_state_dict(
+            torch.load("diffusion_span_0.1_T12_dropout_0.1.pt", map_location=device)
+        )
+
+        diffusion_forward = DiscreteDiffusionForward(
+            T=T,
+            mask_token_id=tokenizer.mask_token_id,
+        ).to(device)
+
+        # Run evaluation
+        test_loss, test_acc = evaluate_diffusion(
+            model,
+            test_loader,
+            diffusion_forward,
+            tokenizer,
+            device,
+        )
+
+        print(f"\nTest Loss: {test_loss:.4f}")
+        print(f"Test Accuracy: {test_acc:.4f}")

@@ -85,7 +85,7 @@ def evaluate_diffusion(
     total_masked = 0
 
     with torch.no_grad():
-        for batch in tqdm(dataloader, desc="Validation Diffusion"):
+        for batch in tqdm(dataloader, desc="Evaluation Diffusion"):
 
             input_ids = batch["input_ids"].to(device)
             target_ids = batch["target_ids"].to(device)
