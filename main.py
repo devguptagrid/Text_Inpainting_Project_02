@@ -14,7 +14,7 @@ from diffusion.forward_process import DiscreteDiffusionForward
 from training.diffusion_trainer import train_diffusion_epoch, evaluate_diffusion
 from data.diffusion_dataset import DiffusionDataset
 
-mode = "diffusion"   # "baseline" or "diffusion"
+mode = "inference"   # "baseline" or "diffusion"
 
 if __name__ == "__main__":
     set_seed(42)
@@ -197,3 +197,58 @@ if __name__ == "__main__":
                     f"diffusion_{mask_type}_{mask_ratio}_T{T}_dropout_0.1.pt"
                 )
                 print("✅ Best model saved.")
+
+        
+    elif mode == "inference":
+
+        print("\nRunning INFERENCE...\n")
+
+        T = 12
+
+        model = DiffusionBert(
+            T=T,
+            conditioning_dropout=0.1
+        ).to(device)
+
+        diffusion_forward = DiscreteDiffusionForward(
+            T=T,
+            mask_token_id=tokenizer.mask_token_id
+        ).to(device)
+
+        model.load_state_dict(
+            torch.load("diffusion_span_0.1_T12_dropout_0.1.pt", map_location=device)
+        )
+
+        model.eval()
+
+        # Use validation dataset for testing
+        val_data = TextInpaintingDataset(
+            sequences=val_sequences,
+            tokenizer=tokenizer,
+            mask_type="span",
+            mask_ratio=0.10,
+            dynamic_masking=False,
+        )
+
+        sample = val_data[0]
+
+        input_ids = sample["input_ids"].unsqueeze(0).to(device)
+        mask_positions = sample["mask_positions"].unsqueeze(0).to(device)
+
+        from inference.reverse_diffusion import reverse_diffusion_sample
+
+        generated = reverse_diffusion_sample(
+            model,
+            diffusion_forward,
+            tokenizer,
+            input_ids,
+            mask_positions,
+            T=T,
+            temperature=0.8,
+            top_k=20,
+            device=device
+        )
+
+        print("ORIGINAL:", tokenizer.decode(sample["target_ids"]))
+        print("MASKED:", tokenizer.decode(sample["input_ids"]))
+        print("GENERATED:", tokenizer.decode(generated[0]))
