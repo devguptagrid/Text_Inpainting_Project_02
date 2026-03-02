@@ -520,6 +520,9 @@ Goal:
 - Balance between diversity and accuracy.
 - Improve text coherence in inpainting.
 
+Best is with temp 0.8 and top-k - 20
+Test Loss: 2.9221
+Test Accuracy: 0.5114
 ---
 
 ### 1️⃣1️⃣ User Interface

@@ -43,6 +43,11 @@ def span_mask_sequence(
     special_token_ids=None,
 ):
 
+     # Ensure tensor
+    if isinstance(input_ids, list):
+        input_ids = torch.tensor(input_ids, dtype=torch.long)
+
+    
     seq_len = len(input_ids)
     num_to_mask = int(seq_len * mask_ratio)
 

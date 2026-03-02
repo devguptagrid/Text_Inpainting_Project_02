@@ -14,7 +14,11 @@ from diffusion.forward_process import DiscreteDiffusionForward
 from training.diffusion_trainer import train_diffusion_epoch, evaluate_diffusion
 from data.diffusion_dataset import DiffusionDataset
 
-mode = "inference"   # "baseline" or "diffusion"
+from evaluation.bleu import compute_masked_bleu
+from evaluation.rouge import compute_masked_rouge_l
+from inference.reverse_diffusion import reverse_diffusion_sample
+
+mode = "test"   # "baseline" or "diffusion"
 
 if __name__ == "__main__":
     set_seed(42)
@@ -354,3 +358,62 @@ if __name__ == "__main__":
 
         print(f"\nTest Loss: {test_loss:.4f}")
         print(f"Test Accuracy: {test_acc:.4f}")
+
+        # =========================
+    # BLEU Evaluation
+    # =========================
+
+    print("\nComputing BLEU Score...\n")
+
+    model.eval()
+
+    total_bleu = 0
+    total_rouge = 0
+    num_samples = 0
+
+    for batch_idx, batch in enumerate(test_loader):
+
+        if batch_idx > 30:   # limit for speed (remove later)
+            break
+
+        input_ids = batch["input_ids"].to(device)
+        target_ids = batch["target_ids"].to(device)
+        mask_positions = batch["mask_positions"].to(device)
+
+        generated = reverse_diffusion_sample(
+            model=model,
+            diffusion_forward=diffusion_forward,
+            tokenizer=tokenizer,
+            input_ids=input_ids,
+            mask_positions=mask_positions,
+            T=T,
+            temperature=0.7,
+            top_k=0,
+            device=device
+        )
+
+        for i in range(input_ids.size(0)):
+
+            bleu = compute_masked_bleu(
+                target_ids[i].cpu(),
+                generated[i].cpu(),
+                mask_positions[i].cpu(),
+                tokenizer
+            )
+
+            rouge = compute_masked_rouge_l(
+                target_ids[i].cpu(),
+                generated[i].cpu(),
+                mask_positions[i].cpu(),
+                tokenizer
+            )
+
+            total_bleu += bleu
+            total_rouge += rouge
+            num_samples += 1
+
+    avg_bleu = total_bleu / num_samples
+    avg_rouge = total_rouge / num_samples
+
+    print(f"Masked BLEU Score: {avg_bleu:.4f}")
+    print(f"Masked ROUGE-L Score: {avg_rouge:.4f}")
