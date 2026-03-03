@@ -68,7 +68,7 @@ def inpaint(text, temperature, top_k):
     return_tensors="pt",
     truncation=True,
     padding=False,
-    max_length=128   # shorter for UI
+    max_length=256
     )
 
     input_ids = encoded["input_ids"][0]
@@ -125,7 +125,38 @@ def inpaint(text, temperature, top_k):
         mask_positions.squeeze(0).cpu()
     )
 
-    return original_text, masked_text, highlighted_text
+    boxed_output = f"""
+    <div style="display:flex; flex-direction:column; gap:16px;">
+
+
+    <div style="
+        border:1px solid #444;
+        border-radius:8px;
+        padding:12px;
+        max-height:250px;
+        overflow-y:auto;
+        background-color:#1e1e1e;
+    ">
+    <b>Masked</b><br><br>
+    {masked_text}
+    </div>
+
+    <div style="
+        border:1px solid #444;
+        border-radius:8px;
+        padding:12px;
+        max-height:250px;
+        overflow-y:auto;
+        background-color:#1e1e1e;
+    ">
+    <b>Generated (Highlighted)</b><br><br>
+    {highlighted_text}
+    </div>
+
+    </div>
+    """
+
+    return boxed_output
 
 
 # =============================
@@ -140,9 +171,7 @@ demo = gr.Interface(
         gr.Slider(0, 50, value=20, step=1, label="Top-K"),
     ],
     outputs=[
-        gr.Textbox(label="Original"),
-        gr.Textbox(label="Masked"),
-        gr.HTML(label="Generated (Highlighted)")
+        gr.HTML(label="Output")
     ],
     title="Diffusion Text Inpainting",
     description="Paste text → model masks spans → diffusion fills them → filled tokens shown in green."

@@ -173,6 +173,7 @@ Validation Accuracy: **42.89%**
 
 ---
 
+
 ## T = 12 (Best Configuration)
 
 | Mask Type | Ratio | Train Accuracy% | Validation Accuracy% | Train Loss | Validation Loss |
