@@ -1,6 +1,6 @@
-# 📘 Diffusion-Based Text Inpainting using Discrete Diffusion (D3PM)
+# Diffusion-Based Text Inpainting using Discrete Diffusion (D3PM)
 
-## 🔹 Overview
+## Overview
 
 This project implements a **Discrete Diffusion Probabilistic Model (D3PM-style)** for span-based text inpainting using a pretrained BERT backbone.
 
@@ -17,7 +17,7 @@ The development progressed through:
 
 ---
 
-# 📂 Dataset
+# Dataset
 
 We use **WikiText-2 (raw version)** from HuggingFace:
 
@@ -44,7 +44,7 @@ load_dataset("wikitext", "wikitext-2-raw-v1")
 
 ---
 
-# 🔹 Preprocessing Pipeline
+# Preprocessing Pipeline
 
 1. Tokenization: `bert-base-uncased`
 2. Fixed-length chunking (256 tokens)
@@ -57,7 +57,7 @@ load_dataset("wikitext", "wikitext-2-raw-v1")
 
 ---
 
-# 🔹 Phase 1 — Transformer From Scratch
+# Phase 1 — Transformer From Scratch
 
 Custom Transformer encoder built using PyTorch:
 
@@ -74,7 +74,7 @@ WikiText-2 (~2M tokens) is insufficient to train a strong language model from sc
 
 ---
 
-# 🔹 Phase 2 — Pretrained BERT Baseline
+# Phase 2 — Pretrained BERT Baseline
 
 Used:
 
@@ -108,7 +108,7 @@ Validation Accuracy: **19.89%**
 
 ---
 
-# 🔹 Phase 3 — Diffusion Model (Without Mask Conditioning)
+# Phase 3 — Diffusion Model (Without Mask Conditioning)
 
 Implemented discrete forward corruption:
 
@@ -155,7 +155,7 @@ Validation Accuracy: **24.58%**
 
 ---
 
-# 🔹 Phase 4 — Diffusion With Mask Conditioning
+# Phase 4 — Diffusion With Mask Conditioning
 
 Added explicit mask embeddings so the model knows which tokens were originally masked.
 
@@ -187,7 +187,7 @@ Validation Accuracy: **42.89%**
 
 ---
 
-# 🔹 Conditioning Dropout
+# Conditioning Dropout
 
 Added conditioning dropout (0.1) to reduce over-reliance on mask embeddings.
 
@@ -205,7 +205,7 @@ Validation Accuracy: **50.97%**
 ---
 
 
-# 🔹 Final Selected Model
+# Final Selected Model
 
 Configuration:
 
@@ -218,7 +218,7 @@ Configuration:
 
 ---
 
-# 🔹 Test Results
+# Test Results
 
 Test Loss: **2.9221**  
 Test Accuracy: **51.14%**
@@ -237,7 +237,7 @@ ROUGE-L better captures structural similarity in span reconstruction.
 
 ---
 
-# 🔹 Inference Decoding Experiments
+# Inference Decoding Experiments
 
 Tested:
 
@@ -256,7 +256,7 @@ Balanced diversity and coherence.
 ---
 
 
-# 🔹 Gradio UI
+# Gradio UI
 
 Interactive interface allows:
 
@@ -268,7 +268,7 @@ Interactive interface allows:
 - Adjustable top-k
 
 
-# 📁 Project Structure
+# Project Structure
 
 ```
 TEXT-INPAINTING_02/
@@ -317,43 +317,43 @@ TEXT-INPAINTING_02/
 
 ---
 
-## 📌 Folder Responsibilities
+## Folder Responsibilities
 
-### 🔹 `data/`
+### `data/`
 Handles dataset loading, preprocessing, tokenization, and masking logic.
 
-### 🔹 `diffusion/`
+### `diffusion/`
 Implements the forward corruption process for discrete diffusion.
 
-### 🔹 `models/`
+### `models/`
 Contains:
 - Baseline Transformer
 - DiffusionBert model with timestep + mask conditioning
 
-### 🔹 `training/`
+### `training/`
 Training loops for:
 - Baseline model
 - Diffusion model
 - Gradient accumulation logic
 
-### 🔹 `inference/`
+### `inference/`
 Reverse diffusion sampling and inpainting pipeline.
 
-### 🔹 `evaluation/`
+### `evaluation/`
 Implements:
 - BLEU score
 - ROUGE-L
 - Accuracy metrics
 
-### 🔹 `utils/`
+### `utils/`
 Utility functions:
 - Device management (CPU / MPS)
 - Seed setting for reproducibility
 
-### 🔹 `app.py`
+### `app.py`
 Gradio-based UI for interactive text inpainting.
 
-### 🔹 `main.py`
+### `main.py`
 Entry point for:
 - Training
 - Validation
@@ -364,7 +364,7 @@ Entry point for:
 ---
 
 
-# 🔹 Requirements
+# Requirements
 
 ```
 torch
@@ -383,7 +383,7 @@ rouge-score
 
 
 
-# 🎯 Final Outcome
+# Final Outcome
 
 Target: **35%+ masked-token accuracy**
 
