@@ -1,3 +1,5 @@
+## Used to create the Gradio UI
+
 import torch
 import gradio as gr
 
@@ -18,18 +20,18 @@ tokenizer = get_tokenizer()
 T = 12
 mask_ratio = 0.10
 
-model = DiffusionBert(
+model = DiffusionBert(## Initializes the diffusion model with the specified parameters, including the number of diffusion steps (T), the mask token ID from the tokenizer, and a conditioning dropout rate, and moves it to the appropriate device for inference.
     T=T,
     conditioning_dropout=0.1
 ).to(device)
 
-model.load_state_dict(
+model.load_state_dict( ## Loads the trained model weights from the specified file, mapping them to the appropriate device for inference.
     torch.load("diffusion_span_0.1_T12_dropout_0.1.pt", map_location=device)
 )
 
 model.eval()
 
-diffusion_forward = DiscreteDiffusionForward(
+diffusion_forward = DiscreteDiffusionForward( ## Initializes the forward diffusion process with the specified number of steps (T) and the mask token ID from the tokenizer, and moves it to the appropriate device for inference.
     T=T,
     mask_token_id=tokenizer.mask_token_id
 ).to(device)
@@ -40,19 +42,19 @@ diffusion_forward = DiscreteDiffusionForward(
 # =============================
 
 def highlight_tokens(masked_ids, generated_ids, mask_positions):
-    tokens = tokenizer.convert_ids_to_tokens(generated_ids.tolist())
-    masked_flags = mask_positions.tolist()
+    tokens = tokenizer.convert_ids_to_tokens(generated_ids.tolist()) ## Convert the generated token IDs to their corresponding token strings using the tokenizer's vocabulary.
+    masked_flags = mask_positions.tolist() ## Convert the mask positions tensor to a list of boolean flags indicating which tokens were masked (True for masked, False for unmasked).
 
     final_tokens = []
 
     for token, is_mask in zip(tokens, masked_flags):
-        if token in tokenizer.all_special_tokens:
+        if token in tokenizer.all_special_tokens: ## If the token is a special token (like [CLS], [SEP], [PAD]), we skip highlighting and just add it to the final tokens list without modification.
             continue
 
-        if is_mask:
+        if is_mask: ## If the token was masked (is_mask is True), we wrap it in an HTML span with green color and bold font to highlight it as a generated token.
             token = f"<span style='color:green; font-weight:bold'>{token}</span>"
 
-        final_tokens.append(token)
+        final_tokens.append(token) ## Add the token (highlighted or not) to the final tokens list.
 
     return tokenizer.convert_tokens_to_string(final_tokens)
 
@@ -61,7 +63,7 @@ def highlight_tokens(masked_ids, generated_ids, mask_positions):
 # Main Inpainting Function
 # =============================
 
-def inpaint(text, temperature, top_k):
+def inpaint(text, temperature, top_k): ## Main function to perform text inpainting. It takes the input text, applies masking, runs the reverse diffusion process to generate inpainted text, and decodes the output back to a string.
 
     encoded = tokenizer(
     text,
@@ -71,11 +73,11 @@ def inpaint(text, temperature, top_k):
     max_length=256
     )
 
-    input_ids = encoded["input_ids"][0]
+    input_ids = encoded["input_ids"][0] ## Extract the input token IDs from the tokenized output, which will be used as input for the masking and generation process.
 
-    input_ids = input_ids.to(device)
+    input_ids = input_ids.to(device) ## Move the input token IDs to the appropriate device (CPU or GPU) for processing during masking and generation.
 
-    masked_input, _, mask_positions = apply_masking(
+    masked_input, _, mask_positions = apply_masking( ## Apply the same masking logic used during training to the input token IDs, which will create a masked version of the input and identify the positions that were masked.
         input_ids=input_ids,
         mask_token_id=tokenizer.mask_token_id,
         mask_type="span",
@@ -90,7 +92,7 @@ def inpaint(text, temperature, top_k):
     masked_input = masked_input.unsqueeze(0).to(device)
     mask_positions = mask_positions.unsqueeze(0).to(device)
 
-    generated = reverse_diffusion_sample(
+    generated = reverse_diffusion_sample( ## Run reverse diffusion sampling to generate inpainted token IDs for the masked positions using the trained model, forward diffusion process, tokenizer, input IDs, and mask positions.
         model=model,
         diffusion_forward=diffusion_forward,
         tokenizer=tokenizer,
@@ -103,7 +105,7 @@ def inpaint(text, temperature, top_k):
     )
 
     original_text = text
-    tokens = tokenizer.convert_ids_to_tokens(
+    tokens = tokenizer.convert_ids_to_tokens( ## Convert the original input token IDs to their corresponding token strings using the tokenizer's vocabulary, which will be used to reconstruct the masked text for display.
     masked_input.squeeze(0).tolist()
     )
 
@@ -117,9 +119,9 @@ def inpaint(text, temperature, top_k):
         ]
     ]
 
-    masked_text = tokenizer.convert_tokens_to_string(tokens)
+    masked_text = tokenizer.convert_tokens_to_string(tokens) ## Convert the list of tokens (with special tokens removed) back to a string using the tokenizer's vocabulary, which will represent the masked version of the original text for display.
 
-    highlighted_text = highlight_tokens(
+    highlighted_text = highlight_tokens( ## Call the highlight_tokens function to generate an HTML string with the generated tokens highlighted in green, by comparing the masked input token IDs, generated token IDs, and mask positions.
         masked_input.squeeze(0).cpu(),
         generated.squeeze(0).cpu(),
         mask_positions.squeeze(0).cpu()
@@ -164,13 +166,13 @@ def inpaint(text, temperature, top_k):
 # =============================
 
 demo = gr.Interface(
-    fn=inpaint,
-    inputs=[
+    fn=inpaint,## Set the function to be called when the user interacts with the UI, which is the inpaint function defined above that performs text inpainting and returns an HTML string with the results.
+    inputs=[ ## Define the input components for the Gradio UI, which include a textbox for the input text, and sliders for adjusting the temperature and top-k parameters for generation.
         gr.Textbox(label="Input Text", lines=8),
         gr.Slider(0.5, 1.5, value=0.8, step=0.1, label="Temperature"),
         gr.Slider(0, 50, value=20, step=1, label="Top-K"),
     ],
-    outputs=[
+    outputs=[ ## Define the output component for the Gradio UI, which is an HTML component that will display the masked and generated text with appropriate formatting and highlighting.
         gr.HTML(label="Output")
     ],
     title="Diffusion Text Inpainting",

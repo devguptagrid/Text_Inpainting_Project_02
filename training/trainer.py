@@ -1,3 +1,5 @@
+##Training loop for the baseline transformer model without diffusion.
+
 import torch
 from tqdm import tqdm ## progress bar for training loop
 from training.loss import masked_cross_entropy_loss
@@ -25,7 +27,7 @@ def train_one_epoch(model, dataloader, optimizer, device): ##function for input 
             mask_positions,
         )
 
-        loss.backward() ##compte gradienyts wrt loss
+        loss.backward() ##compute gradients wrt loss
         optimizer.step() ## update model parameters based on computed gradients
         acc = masked_accuracy( ## computes the accuracy of the model's predictions for the masked tokens by comparing the predicted token IDs (obtained by taking the argmax of the logits) with the true target token IDs, but only for the positions that were masked, giving a measure of how well the model is reconstructing the masked tokens.
             logits,
@@ -36,10 +38,10 @@ def train_one_epoch(model, dataloader, optimizer, device): ##function for input 
         total_acc += acc ## accumulate accuracy for the epoch to compute average accuracy later
         progress_bar.set_postfix(loss=loss.item(), acc=acc) ## update the progress bar to show the current loss and accuracy for the batch
     avg_loss = total_loss / len(dataloader) ##give mean loss across batches
-    avg_acc = total_acc / len(dataloader)
+    avg_acc = total_acc / len(dataloader) ## give mean accuracy across batches
     return avg_loss, avg_acc
 
-def evaluate(model, dataloader, device):
+def evaluate(model, dataloader, device): ## Evaluates the model on the validation set by following a similar process as training but without gradient updates, to compute the average loss and accuracy on the masked tokens.
     model.eval()
 
     total_loss = 0
@@ -50,10 +52,15 @@ def evaluate(model, dataloader, device):
 
             input_ids = batch["input_ids"].to(device)
             target_ids = batch["target_ids"].to(device)
+
+            # Get mask positions and attention mask
             mask_positions = batch["mask_positions"].to(device)
             attention_mask = torch.ones_like(input_ids)
+
+            # Forward pass
             logits = model(input_ids, attention_mask)
 
+            # Compute loss and accuracy only on masked positions
             loss = masked_cross_entropy_loss(
                 logits,
                 target_ids,

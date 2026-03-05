@@ -1,3 +1,5 @@
+## Implements masking strategies such as random masking and span masking used for text inpainting.
+
 import random
 import torch
 
@@ -34,7 +36,7 @@ def random_token_mask(
 
 
 
-def span_mask_sequence(
+def span_mask_sequence( ##Masks contiguous spans of tokens, which can be more challenging for the model to learn to inpaint.
     input_ids,
     mask_token_id,
     mask_ratio=0.25,
@@ -48,11 +50,11 @@ def span_mask_sequence(
         input_ids = torch.tensor(input_ids, dtype=torch.long)
 
     
-    seq_len = len(input_ids)
-    num_to_mask = int(seq_len * mask_ratio)
+    seq_len = len(input_ids) ## number of tokens in the input sequence
+    num_to_mask = int(seq_len * mask_ratio) ## number of tokens to mask based on the specified ratio
 
-    masked_input = input_ids.clone()
-    mask_positions = torch.zeros(seq_len, dtype=torch.bool)
+    masked_input = input_ids.clone() ## create a copy of the input token IDs to modify for masking
+    mask_positions = torch.zeros(seq_len, dtype=torch.bool) ## initialize a tensor to track which positions are masked (False means not masked, True means masked)
 
     total_masked = 0
 
@@ -62,16 +64,16 @@ def span_mask_sequence(
 
     while total_masked < num_to_mask:
 
-        span_length = random.randint(min_span_length, max_span_length)
-        start_idx = random.randint(0, seq_len - span_length)
+        span_length = random.randint(min_span_length, max_span_length) ## randomly determine the length of the span to mask within the specified range
+        start_idx = random.randint(0, seq_len - span_length) ## randomly select a starting index for the span, ensuring it fits within the sequence length
 
         for i in range(start_idx, start_idx + span_length):
 
-            # 🚫 Do NOT mask special tokens
+            # Do NOT mask special tokens
             if input_ids[i].item() in special_token_ids:
                 continue
 
-            # 🚫 Skip if already masked
+            # Skip if already masked
             if mask_positions[i]:
                 continue
 
@@ -85,7 +87,7 @@ def span_mask_sequence(
     return masked_input, input_ids.clone(), mask_positions
 
 
-def apply_masking(
+def apply_masking( ##Main function to apply the specified masking strategy (random or span) to the input token IDs. 
     input_ids,
     mask_token_id,
     mask_type="span",

@@ -1,3 +1,5 @@
+##Defines masked cross-entropy loss used to train the model only on corrupted tokens.
+
 import torch
 import torch.nn.functional as F
 

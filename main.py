@@ -1,3 +1,7 @@
+## Main script to run training, evaluation, and inference for both baseline and diffusion models. It loads the dataset, preprocesses it, 
+# initializes the model and optimizer, and runs the training loop. It also includes code for evaluating the model on the test set and 
+# computing BLEU/ROUGE scores.
+
 from utils.seed import set_seed
 from utils.device import get_device
 from data.load_data import load_wikitext, clean_dataset
@@ -18,19 +22,19 @@ from evaluation.bleu import compute_masked_bleu
 from evaluation.rouge import compute_masked_rouge_l
 from inference.reverse_diffusion import reverse_diffusion_sample
 
-mode = "test"   # "baseline" or "diffusion"
+mode = "test"   # "baseline" or "diffusion" or "inference" or "test"
 
 if __name__ == "__main__":
-    set_seed(42)
-    device = get_device()
+    set_seed(42) ## Set random seed for reproducibility across runs, ensuring that the same sequence of random numbers is generated each time the code is executed, 
+    device = get_device() ## Detects if a CPU or Apple Silicon (MPS) is available and returns the appropriate device for PyTorch computations,
     
-    dataset = load_wikitext()
+    dataset = load_wikitext() ## Loads the WikiText-2 dataset,
 
-    train_dataset = clean_dataset(dataset["train"])
-    val_dataset = clean_dataset(dataset["validation"])
-    test_dataset= clean_dataset(dataset["test"])
+    train_dataset = clean_dataset(dataset["train"]) ## Cleans the training dataset by removing empty lines and unnecessary whitespace, preparing it for tokenization and model training.
+    val_dataset = clean_dataset(dataset["validation"]) ## Cleans the validation dataset by removing empty lines and unnecessary whitespace, preparing it for tokenization and model evaluation.
+    test_dataset= clean_dataset(dataset["test"]) ## Cleans the test dataset by removing empty lines and unnecessary whitespace, preparing it for tokenization and final evaluation of the trained model.
 
-    tokenizer = get_tokenizer()
+    tokenizer = get_tokenizer() ## Initializes a tokenizer (e.g., BERT tokenizer) that will be used to convert raw text into token IDs for model input and to decode model outputs back into human-readable text.
 
     ##Tokenize train
     tokenized_train = tokenize_dataset(train_dataset, tokenizer)
@@ -56,9 +60,10 @@ if __name__ == "__main__":
         stride=32
     )
 
-    num_epochs = 4
+    num_epochs = 4 # Set to 4 for quick testing
 
-    if mode == "baseline":
+    if mode == "baseline": ## Runs the baseline training loop using a standard BERT denoising autoencoder architecture.
+
         train_data = TextInpaintingDataset(
         sequences=train_sequences,
         tokenizer=tokenizer,
@@ -76,13 +81,13 @@ if __name__ == "__main__":
         )
 
 
-        train_loader = DataLoader(
+        train_loader = DataLoader( ## Creates a DataLoader for the training dataset, which will handle batching and shuffling of the data during training.
             train_data,
             batch_size=32,
             shuffle=True,
         )
 
-        val_loader = DataLoader(
+        val_loader = DataLoader( ## Creates a DataLoader for the validation dataset, which will handle batching of the data during evaluation, without shuffling to maintain consistency.
             val_data,
             batch_size=32,
             shuffle=False,
@@ -90,9 +95,9 @@ if __name__ == "__main__":
 
         print("\nRunning BASELINE training...\n")
 
-        model = BertDenoiser().to(device)
+        model = BertDenoiser().to(device) ## Initializes the BERT denoising autoencoder model and moves it to the appropriate device (CPU or MPS) for training.
 
-        optimizer = torch.optim.AdamW(
+        optimizer = torch.optim.AdamW( ## Sets up the AdamW optimizer with the model parameters, a learning rate of 3e-4, and a weight decay of 0.01 for regularization during training.
             model.parameters(),
             lr=3e-4,
             weight_decay=0.01,
@@ -102,14 +107,14 @@ if __name__ == "__main__":
 
             print(f"\nEpoch {epoch+1}/{num_epochs}")
 
-            train_loss, train_acc = train_one_epoch(
+            train_loss, train_acc = train_one_epoch( ## Trains the model for one epoch by iterating over the training dataloader, applying masking, and computing the loss and accuracy on the masked tokens to update the model parameters.
                 model,
                 train_loader,
                 optimizer,
                 device,
             )
 
-            val_loss, val_acc = evaluate(
+            val_loss, val_acc = evaluate(## Evaluates the model on the validation set by following a similar process as training but without gradient updates, to compute the average loss and accuracy on the masked tokens.
                 model,
                 val_loader,
                 device,
@@ -132,7 +137,7 @@ if __name__ == "__main__":
 
         best_val_acc = 0.0
 
-        train_data = TextInpaintingDataset(
+        train_data = TextInpaintingDataset( ## Creates a TextInpaintingDataset for the training data, which will apply the specified masking strategy.
             sequences=train_sequences,
             tokenizer=tokenizer,
             mask_type=mask_type,
@@ -140,7 +145,7 @@ if __name__ == "__main__":
             dynamic_masking=True,
         )
 
-        val_data = TextInpaintingDataset(
+        val_data = TextInpaintingDataset( ## Creates a TextInpaintingDataset for the validation data, which will apply the specified masking strategy in a fixed manner for consistent evaluation.
             sequences=val_sequences,
             tokenizer=tokenizer,
             mask_type=mask_type,
@@ -148,26 +153,26 @@ if __name__ == "__main__":
             dynamic_masking=False,
         )
 
-        train_loader = DataLoader(
+        train_loader = DataLoader( ## Creates a DataLoader for the training dataset, which will handle batching and shuffling of the data during training.
             train_data,
             batch_size=16,
             shuffle=True,
         )
 
-        val_loader = DataLoader(
+        val_loader = DataLoader( ## Creates a DataLoader for the validation dataset, which will handle batching of the data during evaluation, without shuffling to maintain consistency.
             val_data,
             batch_size=16,
             shuffle=False,
         )
 
-        model = DiffusionBert(T=T, conditioning_dropout=0.1).to(device)
+        model = DiffusionBert(T=T, conditioning_dropout=0.1).to(device) ## Initializes the DiffusionBert model with the specified number of diffusion steps (T) and conditioning dropout, and moves it to the appropriate device for training.
 
-        diffusion_forward = DiscreteDiffusionForward(
+        diffusion_forward = DiscreteDiffusionForward(## Initializes the forward diffusion process with the specified number of steps (T) and the mask token ID from the tokenizer, and moves it to the appropriate device for training.
             T=T,
             mask_token_id=tokenizer.mask_token_id
         ).to(device)
 
-        optimizer = torch.optim.AdamW(
+        optimizer = torch.optim.AdamW( ## Sets up the AdamW optimizer with the model parameters and a learning rate of 3e-5 for training the diffusion model.
             model.parameters(),
             lr=3e-5,
         )
@@ -176,7 +181,7 @@ if __name__ == "__main__":
 
             print(f"\nEpoch {epoch+1}/{num_epochs}")
 
-            train_loss, train_acc = train_diffusion_epoch(
+            train_loss, train_acc = train_diffusion_epoch( ## Trains the diffusion model for one epoch by iterating over the training dataloader, sampling random timesteps, corrupting the target sequences according to the diffusion process, and computing the loss only on the masked positions to update the model parameters.
                 model,
                 train_loader,
                 optimizer,
@@ -185,7 +190,7 @@ if __name__ == "__main__":
                 device,
             )
 
-            val_loss, val_acc = evaluate_diffusion(
+            val_loss, val_acc = evaluate_diffusion( ## Evaluates the diffusion model on the validation set by following a similar process as training but without gradient updates, to compute the average loss and accuracy on the masked tokens.
                 model,
                 val_loader,
                 diffusion_forward,
@@ -199,7 +204,7 @@ if __name__ == "__main__":
             print(f"Validation Loss: {val_loss:.4f}")
             print(f"Validation Accuracy: {val_acc:.4f}")
 
-            # 🔥 SAVE BEST MODEL
+            # SAVE BEST MODEL
             if val_acc > best_val_acc:
                 best_val_acc = val_acc
                 torch.save(
@@ -211,15 +216,15 @@ if __name__ == "__main__":
         
     elif mode == "inference":
 
-        def highlight_generated(original_ids, generated_ids, mask_positions, tokenizer):
+        def highlight_generated(original_ids, generated_ids, mask_positions, tokenizer): ## Highlights the generated tokens that were filled in for the masked positions by comparing the original token IDs, generated token IDs, and mask positions, and returns a string with the filled tokens highlighted in green.
             output_tokens = []
 
-            for orig_id, gen_id, is_mask in zip(
+            for orig_id, gen_id, is_mask in zip( ##Iterates through the original token IDs, generated token IDs, and mask positions simultaneously to construct the output string with highlighted tokens.
                 original_ids,
                 generated_ids,
                 mask_positions
             ):
-                token = tokenizer.convert_ids_to_tokens(gen_id.item())
+                token = tokenizer.convert_ids_to_tokens(gen_id.item()) ## Converts the generated token ID back to its corresponding token string using the tokenizer.
 
                 if is_mask:
                     # Green color for replaced tokens
@@ -233,24 +238,24 @@ if __name__ == "__main__":
 
         T = 12
 
-        model = DiffusionBert(
+        model = DiffusionBert( ## Initializes the DiffusionBert model with the specified number of diffusion steps (T) and conditioning dropout, and moves it to the appropriate device for inference.
             T=T,
             conditioning_dropout=0.1
         ).to(device)
 
-        diffusion_forward = DiscreteDiffusionForward(
+        diffusion_forward = DiscreteDiffusionForward( ## Initializes the forward diffusion process with the specified number of steps (T) and the mask token ID from the tokenizer, and moves it to the appropriate device for inference.
             T=T,
             mask_token_id=tokenizer.mask_token_id
         ).to(device)
 
-        model.load_state_dict(
+        model.load_state_dict( ## Loads the trained model weights from the specified file, mapping them to the appropriate device for inference.
             torch.load("diffusion_span_0.1_T12_dropout_0.1.pt", map_location=device)
         )
 
         model.eval()
 
         # Use validation dataset for testing
-        val_data = TextInpaintingDataset(
+        val_data = TextInpaintingDataset( ## Creates a validation dataset for testing the inference performance of the diffusion model.
             sequences=val_sequences,
             tokenizer=tokenizer,
             mask_type="span",
@@ -259,13 +264,13 @@ if __name__ == "__main__":
         )
 
         sample = val_data[0]
-
+        ## Prepare input IDs and mask positions for the sample, moving them to the appropriate device for inference.
         input_ids = sample["input_ids"].unsqueeze(0).to(device)
         mask_positions = sample["mask_positions"].unsqueeze(0).to(device)
 
         from inference.reverse_diffusion import reverse_diffusion_sample
 
-        generated = reverse_diffusion_sample(
+        generated = reverse_diffusion_sample( ## Runs the reverse diffusion sampling process using the trained model, forward diffusion process, tokenizer, input IDs, and mask positions to generate the inpainted token IDs for the masked positions.
             model,
             diffusion_forward,
             tokenizer,
@@ -277,17 +282,17 @@ if __name__ == "__main__":
             device=device
         )
 
-        original_text = tokenizer.decode(
+        original_text = tokenizer.decode( ## Decodes the original target token IDs back into a human-readable string using the tokenizer, skipping any special tokens in the process.
             sample["target_ids"],
             skip_special_tokens=True
         )
 
-        masked_text = tokenizer.decode(
+        masked_text = tokenizer.decode( ## Decodes the masked input token IDs back into a human-readable string using the tokenizer, without skipping special tokens to show the masked positions clearly.
             sample["input_ids"],
             skip_special_tokens=False
         )
 
-        highlighted_text = highlight_generated(
+        highlighted_text = highlight_generated( ## Highlights the generated tokens that were filled in for the masked positions by comparing the original token IDs, generated token IDs, and mask positions, and returns a string with the filled tokens highlighted in green.
             sample["target_ids"],
             generated[0].cpu(),
             sample["mask_positions"],
@@ -314,7 +319,7 @@ if __name__ == "__main__":
 
         best_val_acc = 0.0
         T = 12
-        mask_ratio = 0.10   # your best model
+        mask_ratio = 0.10   
         batch_size = 16
 
         # Create test dataset
@@ -326,7 +331,7 @@ if __name__ == "__main__":
             dynamic_masking=False,  # IMPORTANT
         )
 
-        test_loader = DataLoader(
+        test_loader = DataLoader( ## Creates a DataLoader for the test dataset, which will handle batching of the data during evaluation, without shuffling to maintain consistency.
             test_data,
             batch_size=batch_size,
             shuffle=False,
@@ -338,11 +343,11 @@ if __name__ == "__main__":
             conditioning_dropout=0.1,
         ).to(device)
 
-        model.load_state_dict(
+        model.load_state_dict( ## Loads the trained model weights from the specified file, mapping them to the appropriate device for evaluation.
             torch.load("diffusion_span_0.1_T12_dropout_0.1.pt", map_location=device)
         )
 
-        diffusion_forward = DiscreteDiffusionForward(
+        diffusion_forward = DiscreteDiffusionForward( ## Initializes the forward diffusion process with the specified number of steps (T) and the mask token ID from the tokenizer, and moves it to the appropriate device for evaluation.
             T=T,
             mask_token_id=tokenizer.mask_token_id,
         ).to(device)
@@ -365,7 +370,7 @@ if __name__ == "__main__":
 
     print("\nComputing BLEU Score...\n")
 
-    model.eval()
+    model.eval() ## Set the model to evaluation mode, which disables dropout and other training-specific behaviors, ensuring deterministic outputs during evaluation.
 
     total_bleu = 0
     total_rouge = 0
@@ -373,13 +378,15 @@ if __name__ == "__main__":
 
     for batch_idx, batch in enumerate(test_loader):
 
-        if batch_idx > 30:   # limit for speed (remove later)
+        if batch_idx > 30:   # limit for speed
             break
 
+        ## Prepare input IDs and mask positions for the batch, moving them to the appropriate device for evaluation.
         input_ids = batch["input_ids"].to(device)
         target_ids = batch["target_ids"].to(device)
         mask_positions = batch["mask_positions"].to(device)
 
+        ## Run reverse diffusion sampling to generate inpainted token IDs for the masked positions using the trained model, forward diffusion process, tokenizer, input IDs, and mask positions.
         generated = reverse_diffusion_sample(
             model=model,
             diffusion_forward=diffusion_forward,
@@ -394,6 +401,7 @@ if __name__ == "__main__":
 
         for i in range(input_ids.size(0)):
 
+            ## Compute masked BLEU and ROUGE scores for each sample in the batch by comparing the target token IDs, generated token IDs, and mask positions, and accumulate the scores to compute the average at the end.
             bleu = compute_masked_bleu(
                 target_ids[i].cpu(),
                 generated[i].cpu(),

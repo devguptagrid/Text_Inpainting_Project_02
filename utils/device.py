@@ -1,3 +1,4 @@
+##Utility functions to configure and detect available hardware (CPU or MPS).
 import torch
 
 

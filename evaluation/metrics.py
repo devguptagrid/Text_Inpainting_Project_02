@@ -1,3 +1,5 @@
+##. Implements masked accuracy for text inpainting, to assess the quality of generated text against reference sentences.
+
 import torch
 
 

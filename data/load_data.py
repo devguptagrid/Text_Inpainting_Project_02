@@ -1,3 +1,5 @@
+##Loads the WikiText dataset and prepares it for preprocessing and tokenization.
+
 from datasets import load_dataset
 
 
@@ -17,7 +19,7 @@ def load_wikitext():
     return dataset
 
 
-def clean_dataset(dataset):
+def clean_dataset(dataset): 
     """
     Removes empty lines and very short sequences of less than 10 characters
     """

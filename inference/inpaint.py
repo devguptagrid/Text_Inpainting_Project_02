@@ -1,9 +1,11 @@
+## Runs the full inference pipeline for text inpainting using the trained diffusion model.
+
 import torch
 from data.masking import apply_masking
 from inference.reverse_diffusion import reverse_diffusion_sample
 
 
-def inpaint_text(
+def inpaint_text( ## Main function to perform text inpainting. It takes the input text, applies masking, runs the reverse diffusion process to generate inpainted text, and decodes the output back to a string.
     text,
     model,
     diffusion_forward,
@@ -13,7 +15,7 @@ def inpaint_text(
     mask_ratio=0.10,
     temperature=0.8,
     top_k=20,
-    device="cpu"
+    device="cpu" 
 ):
     model.eval()
 

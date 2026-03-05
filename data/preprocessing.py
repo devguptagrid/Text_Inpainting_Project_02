@@ -1,3 +1,5 @@
+## Handles tokenization, sequence creation, and preprocessing of raw text into fixed-length token sequences. 
+
 from transformers import AutoTokenizer
 from itertools import chain
 
@@ -36,7 +38,7 @@ def tokenize_dataset(dataset, tokenizer):
 
 def create_fixed_length_sequences(tokenized_dataset, seq_len=256, stride=64):
     """
-    Create overlapping sequences using sliding window.
+    Create overlapping sequences using sliding window to reach the project requirements
 
     seq_len: length of each sequence
     stride: step size between windows (smaller stride = more data)

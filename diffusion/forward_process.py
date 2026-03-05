@@ -1,3 +1,4 @@
+##. Implements the forward diffusion process that corrupts tokens across timesteps to generate noisy inputs.
 import torch
 
 
