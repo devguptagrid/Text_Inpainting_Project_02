@@ -178,9 +178,7 @@ Validation Accuracy: **42.89%**
 
 | Mask Type | Ratio | Train Accuracy% | Validation Accuracy% | Train Loss | Validation Loss |
 |------------|--------|----------------|---------------------|------------|-----------------|
-| Random     | 0.10   |                |                     |            |                 |
 | Random     | 0.25   |     71.24      | 69.50               | 1.3612     | 1.5401          |
-| Random     | 0.40   |                |                     |            |                 |
 | Span       | 0.10   |  49.84         |  50.82              |  2.9007    |  2.9259         |
 | Span       | 0.25   | 49.57          | 48.97               | 2.8369     | 3.0832          |
 | Span       | 0.40   |  46.55         | 46.49               |  3.0933    |   3.2812        |
@@ -390,3 +388,77 @@ Target: **35%+ masked-token accuracy**
 Final Achieved: **50%+ masked-token accuracy**
 
 This project demonstrates a complete diffusion-based text inpainting pipeline with training, evaluation, and interactive deployment.
+
+
+# How to Run the Project
+
+Follow the steps below to reproduce the experiments and run the UI locally.
+
+---
+
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/devguptagrid/Text_Inpainting_Project_02.git
+cd Text_Inpainting_Project_02
+```
+## 2. Create Virtual Environment
+#### Mac/Linux
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+#### Windows
+```bash
+python -m venv venv
+venv\Scripts\activate
+```
+
+## 3. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+## 4. Running the project 
+### Train Baseline Model
+```bash
+python main.py --mode train_baseline
+```
+
+### Train Diffusion Model
+```bash
+python main.py --mode diffusion
+```
+
+### Run evaluation
+```bash
+python main.py --mode test
+```
+
+### Run inference
+```bash
+python main.py --mode inference
+```
+
+### Run Gradio UI
+```bash
+python app.py
+```
+
+### Using the UI
+
+#### Steps:
+
+- Paste any input sentence
+
+- The system automatically applies span masking
+
+- The diffusion model reconstructs the masked tokens
+
+- Reconstructed tokens appear highlighted in green
+
+- You can also adjust:
+    - Temperature – controls randomness
+
+    - Top-k – restricts tokens sampling to top-k candidates
