@@ -265,6 +265,8 @@ Interactive interface allows:
 - Adjustable temperature
 - Adjustable top-k
 
+Video_link :  https://drive.google.com/file/d/1Dli7Pqbi3G5PoX9ktUoxGgUH2dXZUfCr/view
+
 
 # Project Structure
 
